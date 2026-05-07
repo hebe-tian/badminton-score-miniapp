@@ -119,6 +119,35 @@ badminton-score-miniapp/
 - **语言**：TypeScript 5.0 - 类型安全
 - **样式**：CSS (rpx单位) - 响应式设计
 - **构建工具**：Vite - 快速的前端构建工具
+- **测试框架**：Python3 + Playwright - E2E 自动化测试
+
+---
+
+## 🧪 E2E 测试
+
+本项目包含完整的端到端自动化测试，使用 Python3 + Playwright 测试 H5 版本。
+
+### 快速运行测试
+
+```bash
+# 方式一：使用脚本（推荐）
+./run_e2e_tests.sh
+
+# 方式二：手动运行
+npm run dev:h5          # 终端1: 启动 H5 服务器
+cd e2e                  # 终端2: 运行测试
+python3 -m pytest tests/ -v
+```
+
+### 测试覆盖
+
+- ✅ 单打模式完整流程
+- ✅ 双打模式完整流程
+- ✅ 五羽伦比模式完整流程
+- ✅ 边界情况和异常场景
+- ✅ 共 17+ 个自动化测试用例
+
+详细文档请参考：[E2E 测试文档](./e2e/README.md)
 
 ---
 

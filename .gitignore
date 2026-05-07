@@ -7,6 +7,11 @@ node_modules/
 .swc
 *.local
 
+# Environment variables
+.env.local
+.env.*.local
+.env.production
+
 # IDE
 .vscode/
 .idea/
@@ -26,3 +31,17 @@ npm-debug.log*
 # Build cache
 .cache/
 .parcel-cache/
+
+# E2E Test reports and screenshots
+e2e/reports/
+e2e/screenshots/
+e2e/test-results/
+e2e/debug_screenshots/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Python virtual environment
+venv/
+env/
+.env/
