@@ -20,6 +20,10 @@ class MatchPage(BasePage):
     BUTTON_RESTART = ".footer-button.restart"
     BUTTON_HOME = ".footer-button.home"
     HISTORY_LIST = ".history-list"
+    HISTORY_ITEM = ".history-item"
+    HISTORY_INDEX = ".history-index"
+    HISTORY_SCORE = ".history-score"
+    HISTORY_SCORER = ".history-scorer"
     MODAL_BUTTON = ".modal-button"
     
     def __init__(self, page: Page):
@@ -184,6 +188,43 @@ class MatchPage(BasePage):
         """关闭换人提示"""
         self.click(self.MODAL_BUTTON)
     
+    def get_substitution_info(self) -> dict:
+        """获取换人弹窗中的详细信息"""
+        if not self.is_substitution_modal_visible():
+            return {}
+        
+        info = {
+            'teamA_out': '',
+            'teamA_in': '',
+            'teamB_out': '',
+            'teamB_in': ''
+        }
+        
+        try:
+            # 获取A队下场球员
+            teamA_out_elem = self.page.query_selector('.sub-team-a .out-name')
+            if teamA_out_elem and teamA_out_elem.is_visible():
+                info['teamA_out'] = teamA_out_elem.text_content().strip()
+            
+            # 获取A队上场球员
+            teamA_in_elem = self.page.query_selector('.sub-team-a .in-name')
+            if teamA_in_elem and teamA_in_elem.is_visible():
+                info['teamA_in'] = teamA_in_elem.text_content().strip()
+            
+            # 获取B队下场球员
+            teamB_out_elem = self.page.query_selector('.sub-team-b .out-name')
+            if teamB_out_elem and teamB_out_elem.is_visible():
+                info['teamB_out'] = teamB_out_elem.text_content().strip()
+            
+            # 获取B队上场球员
+            teamB_in_elem = self.page.query_selector('.sub-team-b .in-name')
+            if teamB_in_elem and teamB_in_elem.is_visible():
+                info['teamB_in'] = teamB_in_elem.text_content().strip()
+        except Exception as e:
+            print(f"获取换人信息失败: {e}")
+        
+        return info
+    
     def is_game_over(self) -> bool:
         """检查比赛是否结束"""
         return self.is_visible(self.GAME_OVER_MODAL)
@@ -239,3 +280,52 @@ class MatchPage(BasePage):
             # 检查比赛是否结束
             if self.is_game_over():
                 break
+    
+    def get_history_list_count(self) -> int:
+        """获取得分列表中的记录数量"""
+        items = self.page.query_selector_all(self.HISTORY_ITEM)
+        return len(items)
+    
+    def get_history_entry(self, index: int) -> dict:
+        """获取得分列表中指定索引的记录（从0开始）
+        
+        Returns:
+            dict: {'index': 序号, 'score': '比分', 'scorer': '得分方'}
+        """
+        items = self.page.query_selector_all(self.HISTORY_ITEM)
+        if index < 0 or index >= len(items):
+            return {}
+        
+        item = items[index]
+        
+        # 获取序号
+        index_elem = item.query_selector(self.HISTORY_INDEX)
+        index_text = index_elem.text_content().strip() if index_elem else ""
+        
+        # 获取比分
+        score_elem = item.query_selector(self.HISTORY_SCORE)
+        score_text = score_elem.text_content().strip() if score_elem else ""
+        
+        # 获取得分方
+        scorer_elem = item.query_selector(self.HISTORY_SCORER)
+        scorer_text = scorer_elem.text_content().strip() if scorer_elem else ""
+        
+        return {
+            'index': index_text,
+            'score': score_text,
+            'scorer': scorer_text
+        }
+    
+    def get_all_history_entries(self) -> list:
+        """获取得分列表中的所有记录
+        
+        Returns:
+            list: [{'index': 序号, 'score': '比分', 'scorer': '得分方'}, ...]
+        """
+        count = self.get_history_list_count()
+        entries = []
+        for i in range(count):
+            entry = self.get_history_entry(i)
+            if entry:
+                entries.append(entry)
+        return entries

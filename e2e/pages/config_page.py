@@ -229,12 +229,12 @@ class ConfigPage(BasePage):
         """开始比赛"""
         self.click(self.START_BUTTON)
     
-    def configure_singles_match(self, score=21, deuce=True, player_a="A", player_b="B"):
-        """快速配置单打比赛"""
+    def configure_singles_match(self, score=21, deuce=True, player_a="Atest", player_b="Btest", server="Atest"):
+        """快速配置单打比赛（使用标准测试名称）"""
         self.set_score_option(score)
         self.set_deuce(deuce)
         self.set_player_name(0, player_a)
         self.set_player_name(1, player_b)
         # 选择发球方
-        self.select_server("A")
+        self.select_server(server)
         self.start_match()

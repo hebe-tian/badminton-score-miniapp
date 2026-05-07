@@ -8,6 +8,12 @@ from pages.match_page import MatchPage
 class TestDoublesMode:
     """双打模式测试"""
     
+    # 标准测试球员名称
+    TEAM_A_PLAYER_1 = "Atest1"
+    TEAM_A_PLAYER_2 = "Atest2"
+    TEAM_B_PLAYER_1 = "Btest1"
+    TEAM_B_PLAYER_2 = "Btest2"
+    
     @pytest.fixture(autouse=True)
     def setup(self, page, base_url):
         """测试前置设置"""
@@ -16,6 +22,21 @@ class TestDoublesMode:
         self.match = MatchPage(page)
         self.base_url = base_url
         self.home.goto(base_url)
+    
+    def set_doubles_players(self, a1=None, a2=None, b1=None, b2=None):
+        """设置双打球员名称（默认使用标准测试名称）"""
+        if a1 is None:
+            a1 = self.TEAM_A_PLAYER_1
+        if a2 is None:
+            a2 = self.TEAM_A_PLAYER_2
+        if b1 is None:
+            b1 = self.TEAM_B_PLAYER_1
+        if b2 is None:
+            b2 = self.TEAM_B_PLAYER_2
+        self.config.set_player_name(0, a1)
+        self.config.set_player_name(1, a2)
+        self.config.set_player_name(2, b1)
+        self.config.set_player_name(3, b2)
     
     def test_select_doubles_mode(self):
         """测试选择双打模式"""
@@ -32,13 +53,10 @@ class TestDoublesMode:
         self.config.set_score_option(15)
         self.config.set_deuce(False)
         # 设置球员姓名
-        self.config.set_player_name(0, "A1")
-        self.config.set_player_name(1, "A2")
-        self.config.set_player_name(2, "B1")
-        self.config.set_player_name(3, "B2")
+        self.set_doubles_players()
         # 选择发球和接发球员
-        self.config.select_server("A1")
-        self.config.select_receiver("B1")
+        self.config.select_server("Atest1")
+        self.config.select_receiver("Btest1")
         self.config.start_match()
         
         self.match.wait_for_selector(self.match.HEADER_TITLE)
@@ -65,12 +83,9 @@ class TestDoublesMode:
         # 配置小分数以便快速测试（使用自定义 5 分）
         self.config.set_score_option(5)  # 会自动使用自定义输入
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "A1")
-        self.config.set_player_name(1, "A2")
-        self.config.set_player_name(2, "B1")
-        self.config.set_player_name(3, "B2")
-        self.config.select_server("A1")
-        self.config.select_receiver("B1")
+        self.set_doubles_players()
+        self.config.select_server("Atest1")
+        self.config.select_receiver("Btest1")
         self.config.start_match()
         
         self.match.wait_for_selector(self.match.HEADER_TITLE)
@@ -92,10 +107,7 @@ class TestDoublesMode:
         # 配置比赛
         self.config.set_score_option(15)
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Atest2")
-        self.config.set_player_name(2, "Btest1")
-        self.config.set_player_name(3, "Btest2")
+        self.set_doubles_players()
         
         # 选择 Atest1 发球，Btest1 接发
         self.config.select_server("Atest1")
@@ -138,10 +150,7 @@ class TestDoublesMode:
         # 配置比赛
         self.config.set_score_option(15)
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Atest2")
-        self.config.set_player_name(2, "Btest1")
-        self.config.set_player_name(3, "Btest2")
+        self.set_doubles_players()
         
         # 选择 Atest1 发球，Btest1 接发
         self.config.select_server("Atest1")
@@ -201,10 +210,7 @@ class TestDoublesMode:
         # 配置比赛
         self.config.set_score_option(15)
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Atest2")
-        self.config.set_player_name(2, "Btest1")
-        self.config.set_player_name(3, "Btest2")
+        self.set_doubles_players()
         
         # 选择 Atest1 发球，Btest1 接发
         self.config.select_server("Atest1")
@@ -261,10 +267,7 @@ class TestDoublesMode:
         # 配置比赛
         self.config.set_score_option(15)
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Atest2")
-        self.config.set_player_name(2, "Btest1")
-        self.config.set_player_name(3, "Btest2")
+        self.set_doubles_players()
         
         # 选择 Atest1 发球，Btest1 接发
         self.config.select_server("Atest1")
@@ -346,7 +349,7 @@ class TestDoublesMode:
         # 发球方得分，发球方不变
         assert server_even == server_odd, f"A队连续得分，发球方应该不变"
         
-        print(f"\n✅ 所有阶段验证通过！")
+        print(f"\n所有阶段验证通过！")
     
     def test_doubles_default_player_names(self):
         """测试不输入信息时使用默认球员名称"""
@@ -389,7 +392,7 @@ class TestDoublesMode:
         assert b_left == "B2", f"B队左边应该是 B2，实际是: {b_left}"
         assert b_right == "B1", f"B队右边应该是 B1，实际是: {b_right}"
         
-        print("✅ 默认球员名称验证通过！")
+        print("默认球员名称验证通过！")
     
     def test_doubles_server_is_b(self):
         """测试B队发球时的状态和得分逻辑"""
@@ -399,10 +402,7 @@ class TestDoublesMode:
         # 配置比赛
         self.config.set_score_option(15)
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Atest2")
-        self.config.set_player_name(2, "Btest1")
-        self.config.set_player_name(3, "Btest2")
+        self.set_doubles_players()
         
         # 选择 Btest1 发球，Atest1 接发
         self.config.select_server("Btest1")
@@ -460,4 +460,73 @@ class TestDoublesMode:
         print(f"A队得分后: {new_server} 发球")
         assert new_server in ["Atest1", "Atest2"], f"发球权应转移到A队，实际是: {new_server}"
         
-        print("✅ B队发球场景验证通过！")
+        print("B队发球场景验证通过！")
+    
+    def test_doubles_game_over_history_list(self):
+        """测试双打比赛结束后查看得分列表"""
+        # 选择双打模式
+        self.home.select_doubles_mode()
+        
+        # 配置比赛（5分制，不加分）
+        self.config.set_score_option(5)
+        self.config.set_deuce(False)
+        self.set_doubles_players()
+        self.config.select_server("Atest1")
+        self.config.select_receiver("Btest1")
+        self.config.start_match()
+        
+        self.match.wait_for_selector(self.match.HEADER_TITLE)
+        
+        # A队得2分
+        for _ in range(2):
+            self.match.add_point_a()
+        
+        # B队得3分
+        for _ in range(3):
+            self.match.add_point_b()
+        
+        # A队再得3分，达到5分，比赛结束
+        for _ in range(3):
+            self.match.add_point_a()
+        
+        # 等待比赛结束
+        self.match.wait_for_game_over()
+        assert self.match.is_game_over()
+        
+        # 验证得分列表
+        history_count = self.match.get_history_list_count()
+        print(f"得分列表记录数: {history_count}")
+        
+        # 应该有8条记录（2+3+3=8分）
+        assert history_count == 8, f"应该有8条得分记录，实际有: {history_count}"
+        
+        # 验证第一条记录
+        first_entry = self.match.get_history_entry(0)
+        print(f"第1条记录: {first_entry}")
+        assert first_entry['index'] == "#1"
+        assert first_entry['score'] == "1 - 0"
+        # 双打应该显示具体球员名称
+        assert "Atest" in first_entry['scorer'], f"双打应显示球员名称，实际是: {first_entry['scorer']}"
+        
+        # 验证最后一条记录
+        last_entry = self.match.get_history_entry(7)
+        print(f"第8条记录: {last_entry}")
+        assert last_entry['index'] == "#8"
+        assert last_entry['score'] == "5 - 3"
+        assert "Atest" in last_entry['scorer'], f"双打应显示球员名称，实际是: {last_entry['scorer']}"
+        
+        # 获取所有记录并验证
+        all_entries = self.match.get_all_history_entries()
+        print(f"\n所有得分记录:")
+        for entry in all_entries:
+            print(f"  {entry['index']}: {entry['score']} - {entry['scorer']}")
+        
+        assert len(all_entries) == 8
+        
+        # 验证双打得分记录包含具体球员名称（不是简单的“A队”或“B队”）
+        for entry in all_entries:
+            scorer = entry['scorer']
+            # 双打模式下，应该显示球员名称，如 "Atest1、Atest2"
+            assert "Atest" in scorer or "Btest" in scorer, f"双打得分记录应包含球员名称，实际是: {scorer}"
+        
+        print("\n双打比赛得分列表验证通过！")

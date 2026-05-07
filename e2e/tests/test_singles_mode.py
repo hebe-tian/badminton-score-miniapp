@@ -9,6 +9,10 @@ from pages.match_page import MatchPage
 class TestSinglesMode:
     """单打模式测试"""
     
+    # 标准测试球员名称
+    PLAYER_A = "Atest"
+    PLAYER_B = "Btest"
+    
     @pytest.fixture(autouse=True)
     def setup(self, page, base_url):
         """测试前置设置"""
@@ -17,6 +21,15 @@ class TestSinglesMode:
         self.match = MatchPage(page)
         self.base_url = base_url
         self.home.goto(base_url)
+    
+    def set_singles_players(self, player_a=None, player_b=None):
+        """设置单打球员名称（默认使用标准测试名称）"""
+        if player_a is None:
+            player_a = self.PLAYER_A
+        if player_b is None:
+            player_b = self.PLAYER_B
+        self.config.set_player_name(0, player_a)
+        self.config.set_player_name(1, player_b)
     
     def test_select_singles_mode(self):
         """测试选择单打模式"""
@@ -129,8 +142,7 @@ class TestSinglesMode:
         self.home.select_singles_mode()
         
         # 设置球员姓名
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Btest1")
+        self.set_singles_players()
         
         # set_player_name 已经包含了 500ms 的等待，不需要额外等待
         
@@ -145,8 +157,8 @@ class TestSinglesMode:
         print(f"Picker 选项: {texts}")
         
         # 验证包含两位球员（应该是自定义名称）
-        assert "Atest1" in texts, f"发球列表中未找到 Atest1，实际列表: {texts}"
-        assert "Btest1" in texts, f"发球列表中未找到 Btest1，实际列表: {texts}"
+        assert "Atest" in texts, f"发球列表中未找到 Atest，实际列表: {texts}"
+        assert "Btest" in texts, f"发球列表中未找到 Btest，实际列表: {texts}"
         
         # 关闭 picker（点击取消或确定）
         self.config.page.click('text=确定')
@@ -160,9 +172,8 @@ class TestSinglesMode:
         # 配置比赛
         self.config.set_score_option(15)
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Btest1")
-        self.config.select_server("Atest1")
+        self.set_singles_players()
+        self.config.select_server("Atest")
         self.config.start_match()
         
         self.match.wait_for_selector(self.match.HEADER_TITLE)
@@ -171,7 +182,7 @@ class TestSinglesMode:
         assert self.match.get_score_a() == 0
         assert self.match.get_score_b() == 0
         
-        # 验证发球标识存在（Atest1 发球）
+        # 验证发球标识存在（Atest 发球）
         assert self.match.is_server_badge_visible(), "发球标识应该可见"
         
         # A 队得 1 分
@@ -233,11 +244,10 @@ class TestSinglesMode:
         # 配置比赛
         self.config.set_score_option(15)
         self.config.set_deuce(False)
-        self.config.set_player_name(0, "Atest1")
-        self.config.set_player_name(1, "Btest1")
+        self.set_singles_players()
         
-        # 选择 Btest1 作为发球方
-        self.config.select_server("Btest1")
+        # 选择 Btest 作为发球方
+        self.config.select_server("Btest")
         self.config.start_match()
         
         self.match.wait_for_selector(self.match.HEADER_TITLE)
@@ -246,7 +256,7 @@ class TestSinglesMode:
         assert self.match.get_score_a() == 0
         assert self.match.get_score_b() == 0
         
-        # 验证发球标识存在（Btest1 发球）
+        # 验证发球标识存在（Btest 发球）
         assert self.match.is_server_badge_visible(), "发球标识应该可见"
         
         # B 队得 2 分
@@ -263,3 +273,61 @@ class TestSinglesMode:
         # 验证最终比分
         assert self.match.get_score_a() == 1
         assert self.match.get_score_b() == 2
+    
+    def test_singles_game_over_history_list(self):
+        """测试单打比赛结束后查看得分列表"""
+        # 选择单打模式
+        self.home.select_singles_mode()
+        
+        # 配置比赛（5分制，不加分）
+        self.config.configure_singles_match(score=5, deuce=False)
+        
+        self.match.wait_for_selector(self.match.HEADER_TITLE)
+        
+        # A队得3分
+        for _ in range(3):
+            self.match.add_point_a()
+        
+        # B队得2分
+        for _ in range(2):
+            self.match.add_point_b()
+        
+        # A队再得2分，达到5分，比赛结束
+        for _ in range(2):
+            self.match.add_point_a()
+        
+        # 等待比赛结束
+        self.match.wait_for_game_over()
+        assert self.match.is_game_over()
+        
+        # 验证得分列表
+        history_count = self.match.get_history_list_count()
+        print(f"得分列表记录数: {history_count}")
+        
+        # 应该有7条记录（3+2+2=7分）
+        assert history_count == 7, f"应该有7条得分记录，实际有: {history_count}"
+        
+        # 验证第一条记录
+        first_entry = self.match.get_history_entry(0)
+        print(f"第1条记录: {first_entry}")
+        assert first_entry['index'] == "#1"
+        assert first_entry['score'] == "1 - 0"
+        # 单打模式显示 "A" 或 "B"
+        assert first_entry['scorer'] in ["A", "B", "A队", "B队", "Atest", "Btest"], f"单打得分方应该是 A 或 B，实际是: {first_entry['scorer']}"
+        
+        # 验证最后一条记录
+        last_entry = self.match.get_history_entry(6)
+        print(f"第7条记录: {last_entry}")
+        assert last_entry['index'] == "#7"
+        assert last_entry['score'] == "5 - 2"
+        assert last_entry['scorer'] in ["A", "B", "A队", "B队", "Atest", "Btest"], f"单打得分方应该是 A 或 B，实际是: {last_entry['scorer']}"
+        
+        # 获取所有记录并验证
+        all_entries = self.match.get_all_history_entries()
+        print(f"\n所有得分记录:")
+        for entry in all_entries:
+            print(f"  {entry['index']}: {entry['score']} - {entry['scorer']}")
+        
+        assert len(all_entries) == 7
+        
+        print("\n单打比赛得分列表验证通过！")
