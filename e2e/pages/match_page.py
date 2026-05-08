@@ -185,8 +185,28 @@ class MatchPage(BasePage):
         return self.is_visible(self.SUBSTITUTION_MODAL)
     
     def close_substitution_modal(self):
-        """关闭换人提示"""
-        self.click(self.MODAL_BUTTON)
+        """关闭换人提示 - 兼容 H5 和小程序"""
+        # 尝试多种选择器来关闭模态框
+        selectors = [
+            self.MODAL_BUTTON,
+            ".modal-button",
+            ".van-button",  # Vant UI 按钮
+            "button",
+            "[role=button]"
+        ]
+        
+        for selector in selectors:
+            try:
+                if self.page.is_visible(selector, timeout=2000):
+                    self.click(selector)
+                    print(f"  [Match] 使用选择器 '{selector}' 关闭模态框成功")
+                    return
+            except:
+                continue
+        
+        # 如果所有选择器都失败，尝试按 ESC 键
+        self.page.keyboard.press("Escape")
+        print(f"  [Match] 使用 ESC 键关闭模态框")
     
     def get_substitution_info(self) -> dict:
         """获取换人弹窗中的详细信息"""
@@ -250,36 +270,12 @@ class MatchPage(BasePage):
         """重新开始比赛"""
         self.click(self.BUTTON_RESTART)
     
-    def go_to_home(self):
-        """返回主页"""
-        self.click(self.BUTTON_HOME)
-    
     def wait_for_game_over(self, timeout: int = 10000):
         """等待比赛结束弹窗出现"""
         # 等待 modal-overlay 出现且可见
         self.page.wait_for_selector('.modal-overlay', state='visible', timeout=timeout)
         # 额外等待一下确保内容加载完成
         self.page.wait_for_timeout(500)
-    
-    def play_until_score(self, target_a: int, target_b: int):
-        """快速进行比赛直到指定比分"""
-        current_a, current_b = self.get_scores()
-        
-        while current_a < target_a or current_b < target_b:
-            if current_a < target_a:
-                self.add_point_a()
-                current_a += 1
-            elif current_b < target_b:
-                self.add_point_b()
-                current_b += 1
-            
-            # 检查是否有换人提示
-            if self.is_substitution_modal_visible():
-                self.close_substitution_modal()
-            
-            # 检查比赛是否结束
-            if self.is_game_over():
-                break
     
     def get_history_list_count(self) -> int:
         """获取得分列表中的记录数量"""

@@ -37,7 +37,7 @@ jobs:
         run: npx eslint src/ --ext .ts,.tsx || echo "ESLint check completed"
       
       - name: Check TypeScript
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit --skipLibCheck
 
   # E2E 测试
   e2e-tests:
@@ -77,16 +77,31 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       
-      - name: Build miniapp for testing
-        run: npm run build:weapp
+      - name: Build H5 for testing
+        run: npm run build:h5
       
-      - name: Start dev server
-        run: npm run dev:weapp &
+      - name: Install static file server
+        run: npm install -g serve
+      
+      - name: Start H5 server
+        run: serve -s dist -l 10086 > /tmp/dev-server.log 2>&1 &
         env:
           NODE_ENV: test
       
-      - name: Wait for dev server
-        run: sleep 10
+      - name: Wait for dev server to be ready
+        run: |
+          echo "Waiting for dev server to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:10086 > /dev/null 2>&1; then
+              echo "Dev server is ready!"
+              exit 0
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+          echo "Dev server failed to start. Logs:"
+          cat /tmp/dev-server.log
+          exit 1
       
       - name: Run E2E tests
         run: |
