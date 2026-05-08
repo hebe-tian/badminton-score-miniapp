@@ -101,13 +101,33 @@ class ConfigPage(BasePage):
         self.page.wait_for_timeout(500)
     
     def select_server(self, server_text: str):
-        """选择发球球员 - 根据文本选择对应选项"""
+        """选择发球球员 - 根据文本选择对应选项（兼容 H5 和小程序）"""
         self.click(self.SERVER_PICKER)
         # 等待 picker 弹出
         self.page.wait_for_timeout(1000)
         
-        # 查找包含指定文本的选项
-        items = self.page.query_selector_all('.weui-picker__item')
+        # 尝试多种选择器来查找选项（兼容 H5 和小程序）
+        selectors = [
+            '.weui-picker__item',  # 微信小程序
+            '.picker-item',        # H5 通用
+            '[role="option"]',     # ARIA
+            '.van-picker-column__item'  # Vant UI
+        ]
+        
+        items = []
+        for selector in selectors:
+            try:
+                items = self.page.query_selector_all(selector)
+                if items:
+                    print(f"  [Config] 使用选择器 '{selector}' 找到 {len(items)} 个选项")
+                    break
+            except:
+                continue
+        
+        if not items:
+            print(f"  [Config] 警告: 未找到任何 picker 选项")
+            return
+        
         clicked = False
         
         # 如果提供了文本，查找匹配的选项
@@ -121,9 +141,10 @@ class ConfigPage(BasePage):
                         center_y = box['y'] + box['height'] / 2
                         self.page.mouse.click(center_x, center_y)
                         clicked = True
+                        print(f"  [Config] 选择了发球方: {text}")
                         break
         
-        # 如果没有找到匹配的或文本为空，点击第一个
+        # 如果没有找到匹配项或没有提供文本，点击第一个选项
         if not clicked and items:
             first_item = items[0]
             box = first_item.bounding_box()
@@ -131,9 +152,12 @@ class ConfigPage(BasePage):
                 center_x = box['x'] + box['width'] / 2
                 center_y = box['y'] + box['height'] / 2
                 self.page.mouse.click(center_x, center_y)
+                clicked = True
+                text = first_item.text_content().strip()
+                print(f"  [Config] 选择了第一个选项: {text}")
         
-        # 等待一下让选择生效
-        self.page.wait_for_timeout(300)
+        # 等待 picker 关闭
+        self.page.wait_for_timeout(500)
         
         # 点击确定按钮 - 使用更精确的选择器，找到可见的Picker中的确定按钮
         # Taro Picker 的确定按钮在 .weui-picker 内部
