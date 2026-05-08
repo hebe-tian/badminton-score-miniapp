@@ -23,9 +23,15 @@ class BasePage:
         """检查元素是否可见"""
         return self.page.is_visible(selector)
     
-    def wait_for_selector(self, selector: str, timeout: int = 10000):
-        """等待元素出现"""
-        self.page.wait_for_selector(selector, timeout=timeout)
+    def wait_for_selector(self, selector: str, timeout: int = 10000, state: str = 'visible'):
+        """等待元素出现
+        
+        Args:
+            selector: CSS 选择器
+            timeout: 超时时间（毫秒）
+            state: 等待状态 ('visible', 'attached', 'hidden', 'detached')
+        """
+        self.page.wait_for_selector(selector, timeout=timeout, state=state)
     
     def take_screenshot(self, name: str):
         """截图"""

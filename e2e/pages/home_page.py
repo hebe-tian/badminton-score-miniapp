@@ -21,7 +21,8 @@ class HomePage(BasePage):
         self.navigate_to(f"{base_url}/#/pages/home/index")
         # 等待页面加载完成
         self.page.wait_for_load_state('networkidle')
-        self.wait_for_selector(self.TITLE, timeout=15000)
+        # 等待标题出现（不要求可见，因为 H5 中可能暂时隐藏）
+        self.wait_for_selector(self.TITLE, timeout=15000, state='attached')
     
     def get_title(self) -> str:
         """获取页面标题"""

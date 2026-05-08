@@ -31,34 +31,37 @@ class ConfigPage(BasePage):
             # 非标准分数（如 5, 50, 100 等），使用自定义输入
             print(f"  [Config] 点击自定义分数选项...")
             self.click(f"{self.SCORE_OPTIONS} >> nth=2")  # 点击“自定义”选项
-            
-            # 等待输入框出现
-            print(f"  [Config] 等待自定义输入框出现...")
-            self.wait_for_selector(self.CUSTOM_SCORE_INPUT, timeout=3000)
-            
-            # 使用 JavaScript 设置值并触发 input 事件
-            print(f"  [Config] 设置自定义分数为: {score}")
-            self.page.evaluate(f"""
-                () => {{
-                    const input = document.querySelector('.custom-score-input');
-                    if (input) {{
-                        // 设置 value 属性
-                        input.value = '{score}';
-                        // 触发 input 事件，模拟用户输入
-                        const event = new Event('input', {{ bubbles: true }});
-                        event.detail = {{ value: '{score}' }};
-                        input.dispatchEvent(event);
-                    }}
-                }}
-            """)
-            
-            # 等待一下让 React 状态更新
-            self.page.wait_for_timeout(500)
-            print(f"  [Config] 自定义分数设置完成")
     
     def set_custom_score(self, score: str):
-        """设置自定义分数"""
-        self.fill(self.CUSTOM_SCORE_INPUT, score)
+        """设置自定义分数 - 使用 JavaScript 直接操作 DOM（兼容 H5）"""
+        # 等待输入框出现
+        print(f"  [Config] 等待自定义输入框出现...")
+        self.wait_for_selector(self.CUSTOM_SCORE_INPUT, timeout=3000)
+        
+        # 使用 JavaScript 设置值并触发 input 事件（兼容 Taro H5 的 taro-input-core）
+        print(f"  [Config] 设置自定义分数为: {score}")
+        self.page.evaluate(f"""
+            () => {{
+                const input = document.querySelector('.custom-score-input');
+                if (input) {{
+                    // 对于 taro-input-core，需要设置 value 属性
+                    input.value = '{score}';
+                    // 同时尝试设置内部 input 元素
+                    const innerInput = input.querySelector('input') || input;
+                    innerInput.value = '{score}';
+                    // 触发 input 事件，模拟用户输入
+                    const event = new Event('input', {{ bubbles: true }});
+                    innerInput.dispatchEvent(event);
+                    // 也触发 change 事件
+                    const changeEvent = new Event('change', {{ bubbles: true }});
+                    innerInput.dispatchEvent(changeEvent);
+                }}
+            }}
+        """)
+        
+        # 等待一下让 React 状态更新
+        self.page.wait_for_timeout(500)
+        print(f"  [Config] 自定义分数设置完成")
     
     def set_deuce(self, enabled: bool):
         """设置是否加分"""

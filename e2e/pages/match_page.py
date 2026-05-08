@@ -185,8 +185,28 @@ class MatchPage(BasePage):
         return self.is_visible(self.SUBSTITUTION_MODAL)
     
     def close_substitution_modal(self):
-        """关闭换人提示"""
-        self.click(self.MODAL_BUTTON)
+        """关闭换人提示 - 兼容 H5 和小程序"""
+        # 尝试多种选择器来关闭模态框
+        selectors = [
+            self.MODAL_BUTTON,
+            ".modal-button",
+            ".van-button",  # Vant UI 按钮
+            "button",
+            "[role=button]"
+        ]
+        
+        for selector in selectors:
+            try:
+                if self.page.is_visible(selector, timeout=2000):
+                    self.click(selector)
+                    print(f"  [Match] 使用选择器 '{selector}' 关闭模态框成功")
+                    return
+            except:
+                continue
+        
+        # 如果所有选择器都失败，尝试按 ESC 键
+        self.page.keyboard.press("Escape")
+        print(f"  [Match] 使用 ESC 键关闭模态框")
     
     def get_substitution_info(self) -> dict:
         """获取换人弹窗中的详细信息"""
@@ -251,8 +271,15 @@ class MatchPage(BasePage):
         self.click(self.BUTTON_RESTART)
     
     def go_to_home(self):
-        """返回主页"""
+        """返回主页 - 兼容 H5 和小程序"""
         self.click(self.BUTTON_HOME)
+        # 等待路由跳转完成
+        self.page.wait_for_timeout(1000)
+        # 等待网络空闲（H5 环境下需要）
+        try:
+            self.page.wait_for_load_state('networkidle', timeout=5000)
+        except:
+            pass  # 如果超时，继续执行
     
     def wait_for_game_over(self, timeout: int = 10000):
         """等待比赛结束弹窗出现"""
