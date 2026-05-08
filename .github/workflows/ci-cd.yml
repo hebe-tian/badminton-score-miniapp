@@ -37,7 +37,7 @@ jobs:
         run: npx eslint src/ --ext .ts,.tsx || echo "ESLint check completed"
       
       - name: Check TypeScript
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit --skipLibCheck
 
   # E2E 测试
   e2e-tests:

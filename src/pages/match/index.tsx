@@ -14,24 +14,20 @@ export default function Match() {
   const configStr = params?.config
   const config: MatchConfig | null = configStr ? JSON.parse(decodeURIComponent(configStr)) : null
 
-  if (!config) {
-    Taro.navigateBack()
-    return null
-  }
-
+  // 将所有 Hooks 放在最前面，在条件返回之前
   const [scoreA, setScoreA] = useState(0)
   const [scoreB, setScoreB] = useState(0)
 
   const [currentA, setCurrentA] = useState<number[]>(
-    config.mode === 'singles' ? [0] : [0, 1]
+    config?.mode === 'singles' ? [0] : [0, 1]
   )
   const [currentB, setCurrentB] = useState<number[]>(
-    config.mode === 'singles' ? [0] : [0, 1]
+    config?.mode === 'singles' ? [0] : [0, 1]
   )
 
-  const [serverTeam, setServerTeam] = useState<'A' | 'B'>(config.serverTeam)
-  const [serverIndex, setServerIndex] = useState(config.serverIndex)
-  const [receiverIndex, setReceiverIndex] = useState(config.receiverIndex)
+  const [serverTeam, setServerTeam] = useState<'A' | 'B'>(config?.serverTeam || 'A')
+  const [serverIndex, setServerIndex] = useState(config?.serverIndex || 0)
+  const [receiverIndex, setReceiverIndex] = useState(config?.receiverIndex || 0)
 
   const [history, setHistory] = useState<MatchHistoryEntry[]>([])
   const [winner, setWinner] = useState<'A' | 'B' | null>(null)
@@ -46,6 +42,12 @@ export default function Match() {
     A: {},
     B: {}
   })
+
+  // 在所有 Hooks 之后再进行条件判断
+  if (!config) {
+    Taro.navigateBack()
+    return null
+  }
 
   useEffect(() => {
     if (config.mode === 'singles') {
