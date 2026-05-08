@@ -270,43 +270,12 @@ class MatchPage(BasePage):
         """重新开始比赛"""
         self.click(self.BUTTON_RESTART)
     
-    def go_to_home(self):
-        """返回主页 - 兼容 H5 和小程序"""
-        self.click(self.BUTTON_HOME)
-        # 等待路由跳转完成
-        self.page.wait_for_timeout(1000)
-        # 等待网络空闲（H5 环境下需要）
-        try:
-            self.page.wait_for_load_state('networkidle', timeout=5000)
-        except:
-            pass  # 如果超时，继续执行
-    
     def wait_for_game_over(self, timeout: int = 10000):
         """等待比赛结束弹窗出现"""
         # 等待 modal-overlay 出现且可见
         self.page.wait_for_selector('.modal-overlay', state='visible', timeout=timeout)
         # 额外等待一下确保内容加载完成
         self.page.wait_for_timeout(500)
-    
-    def play_until_score(self, target_a: int, target_b: int):
-        """快速进行比赛直到指定比分"""
-        current_a, current_b = self.get_scores()
-        
-        while current_a < target_a or current_b < target_b:
-            if current_a < target_a:
-                self.add_point_a()
-                current_a += 1
-            elif current_b < target_b:
-                self.add_point_b()
-                current_b += 1
-            
-            # 检查是否有换人提示
-            if self.is_substitution_modal_visible():
-                self.close_substitution_modal()
-            
-            # 检查比赛是否结束
-            if self.is_game_over():
-                break
     
     def get_history_list_count(self) -> int:
         """获取得分列表中的记录数量"""

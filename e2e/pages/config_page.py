@@ -31,6 +31,8 @@ class ConfigPage(BasePage):
             # 非标准分数（如 5, 50, 100 等），使用自定义输入
             print(f"  [Config] 点击自定义分数选项...")
             self.click(f"{self.SCORE_OPTIONS} >> nth=2")  # 点击“自定义”选项
+            # 自动输入自定义分数
+            self.set_custom_score(str(score))
     
     def set_custom_score(self, score: str):
         """设置自定义分数 - 使用 JavaScript 直接操作 DOM（兼容 H5）"""
