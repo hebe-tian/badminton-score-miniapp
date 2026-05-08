@@ -77,11 +77,14 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       
-      - name: Build miniapp for testing
-        run: npm run build:weapp
+      - name: Build H5 for testing
+        run: npm run build:h5
       
-      - name: Start dev server
-        run: npm run dev:weapp > /tmp/dev-server.log 2>&1 &
+      - name: Install static file server
+        run: npm install -g serve
+      
+      - name: Start H5 server
+        run: serve -s dist -l 10086 > /tmp/dev-server.log 2>&1 &
         env:
           NODE_ENV: test
       
