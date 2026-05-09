@@ -534,11 +534,13 @@ export default function Match() {
                     <Text className='history-score'>
                       {entry.scoreA} - {entry.scoreB}
                     </Text>
-                    <Text className={`history-scorer ${entry.scorer === 'A' ? 'blue' : 'rose'}`}>
+                    <View className={`history-scorer ${entry.scorer === 'A' ? 'blue' : 'rose'}`}>
                       {entry.scorers && entry.scorers.length > 0 
-                        ? entry.scorers.join('、')
-                        : `${entry.scorer}队得分`}
-                    </Text>
+                        ? entry.scorers.map((scorer, scorerIdx) => (
+                            <Text key={scorerIdx} className='scorer-name'>{scorer}</Text>
+                          ))
+                        : <Text className='scorer-name'>{`${entry.scorer}队得分`}</Text>}
+                    </View>
                   </View>
                 ))}
               </View>
