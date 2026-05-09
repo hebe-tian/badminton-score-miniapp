@@ -556,7 +556,16 @@
 .history-scorer {
   font-weight: 500;
   flex: 2;
-  text-align: right;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.scorer-name {
+  font-size: 28rpx;
+  line-height: 1.4;
 }
 
 .history-scorer.blue {

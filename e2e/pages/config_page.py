@@ -30,7 +30,9 @@ class ConfigPage(BasePage):
         else:
             # 非标准分数（如 5, 50, 100 等），使用自定义输入
             print(f"  [Config] 点击自定义分数选项...")
-            self.click(f"{self.SCORE_OPTIONS} >> nth=2")  # 点击“自定义”选项
+            self.click(f"{self.SCORE_OPTIONS} >> nth=2")  # 点击"自定义"选项
+            # 等待自定义输入框出现
+            self.page.wait_for_timeout(500)
             # 自动输入自定义分数
             self.set_custom_score(str(score))
     
@@ -42,7 +44,7 @@ class ConfigPage(BasePage):
         
         # 使用 JavaScript 设置值并触发 input 事件（兼容 Taro H5 的 taro-input-core）
         print(f"  [Config] 设置自定义分数为: {score}")
-        self.page.evaluate(f"""
+        result = self.page.evaluate(f"""
             () => {{
                 const input = document.querySelector('.custom-score-input');
                 if (input) {{
@@ -57,12 +59,19 @@ class ConfigPage(BasePage):
                     // 也触发 change 事件
                     const changeEvent = new Event('change', {{ bubbles: true }});
                     innerInput.dispatchEvent(changeEvent);
+                    return true;
                 }}
+                return false;
             }}
         """)
         
+        if result:
+            print(f"  [Config] 自定义分数设置成功")
+        else:
+            print(f"  [Config] 警告: 未找到自定义输入框元素")
+        
         # 等待一下让 React 状态更新
-        self.page.wait_for_timeout(500)
+        self.page.wait_for_timeout(800)
         print(f"  [Config] 自定义分数设置完成")
     
     def set_deuce(self, enabled: bool):
@@ -102,9 +111,10 @@ class ConfigPage(BasePage):
     
     def select_server(self, server_text: str):
         """选择发球球员 - 根据文本选择对应选项（兼容 H5 和小程序）"""
+        print(f"  [Config] 选择发球方: {server_text}")
         self.click(self.SERVER_PICKER)
         # 等待 picker 弹出
-        self.page.wait_for_timeout(1000)
+        self.page.wait_for_timeout(1500)
         
         # 尝试多种选择器来查找选项（兼容 H5 和小程序）
         selectors = [
@@ -115,10 +125,12 @@ class ConfigPage(BasePage):
         ]
         
         items = []
+        used_selector = ''
         for selector in selectors:
             try:
                 items = self.page.query_selector_all(selector)
                 if items:
+                    used_selector = selector
                     print(f"  [Config] 使用选择器 '{selector}' 找到 {len(items)} 个选项")
                     break
             except:
@@ -157,7 +169,7 @@ class ConfigPage(BasePage):
                 print(f"  [Config] 选择了第一个选项: {text}")
         
         # 等待 picker 关闭
-        self.page.wait_for_timeout(500)
+        self.page.wait_for_timeout(800)
         
         # 点击确定按钮 - 使用更精确的选择器，找到可见的Picker中的确定按钮
         # Taro Picker 的确定按钮在 .weui-picker 内部
@@ -173,21 +185,25 @@ class ConfigPage(BasePage):
             confirm_btn = visible_picker.query_selector('text=确定')
             if confirm_btn:
                 confirm_btn.click()
+                print(f"  [Config] 点击了确定按钮")
             else:
                 # 如果找不到，尝试全局查找可见的确定按钮
                 all_confirms = self.page.query_selector_all('text=确定')
                 for btn in all_confirms:
                     if btn.is_visible():
                         btn.click()
+                        print(f"  [Config] 点击了全局确定按钮")
                         break
         else:
             # 如果没有找到可见的Picker，使用原来的方法
             confirm_btn = self.page.locator('text=确定').first
             if confirm_btn.is_visible():
                 confirm_btn.click()
+                print(f"  [Config] 点击了默认确定按钮")
         
         # 等待 picker 关闭
-        self.page.wait_for_timeout(500)
+        self.page.wait_for_timeout(800)
+        print(f"  [Config] 发球方选择完成")
     
     def select_receiver(self, receiver_text: str):
         """选择接发球员 - 根据文本选择对应选项"""
@@ -256,6 +272,22 @@ class ConfigPage(BasePage):
     
     def start_match(self):
         """开始比赛"""
+        # 等待按钮变为 valid 状态
+        print(f"  [Config] 等待开始按钮变为有效状态...")
+        try:
+            self.page.wait_for_selector('.start-button.valid', state='visible', timeout=10000)
+            print(f"  [Config] 开始按钮已就绪")
+        except Exception as e:
+            print(f"  [Config] 警告: 等待开始按钮超时 - {e}")
+            # 尝试获取当前按钮状态进行调试
+            button = self.page.query_selector('.start-button')
+            if button:
+                classes = button.get_attribute('class')
+                disabled = button.get_attribute('disabled')
+                print(f"  [Config] 当前按钮状态: class='{classes}', disabled={disabled}")
+            raise
+        
+        # 点击开始按钮
         self.click(self.START_BUTTON)
     
     def configure_singles_match(self, score=21, deuce=True, player_a="Atest", player_b="Btest", server="Atest"):
