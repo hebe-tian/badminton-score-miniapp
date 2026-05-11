@@ -1,0 +1,112 @@
+/* 容器布局 */
+.coin-container {
+  min-height: 100vh;
+  background-color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+}
+
+/* 硬币容器 - 3D透视 */
+.coin-area {
+  width: 400rpx;
+  height: 400rpx;
+  perspective: 1000px;
+  margin-bottom: 64rpx;
+}
+
+/* 硬币主体 */
+.coin {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+/* 翻转动画 */
+.coin.flipping {
+  animation: flip-animation 1.5s ease-in-out;
+}
+
+@keyframes flip-animation {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(1800deg); } /* 旋转5圈 */
+}
+
+/* 最终状态 - 正面 */
+.coin.front {
+  transform: rotateY(0deg);
+}
+
+/* 最终状态 - 反面 */
+.coin.back {
+  transform: rotateY(180deg);
+}
+
+/* 硬币两面 */
+.coin-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #ffffff;
+  backface-visibility: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.3);
+}
+
+/* 正面样式 - 金色 */
+.coin-front {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border: 8rpx solid #fcd34d;
+}
+
+/* 反面样式 - 银色 */
+.coin-back {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+  border: 8rpx solid #cbd5e1;
+  transform: rotateY(180deg);
+}
+
+/* 结果文本 */
+.result-text {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #10b981;
+  margin-bottom: 48rpx;
+}
+
+/* 翻转按钮 */
+.flip-button {
+  background-color: #10b981;
+  padding: 32rpx 64rpx;
+  border-radius: 24rpx;
+  margin-bottom: 32rpx;
+  transition: all 0.2s;
+}
+
+.flip-button:active {
+  background-color: #059669;
+  transform: scale(0.95);
+}
+
+.flip-button-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* 使用说明 */
+.instruction {
+  font-size: 24rpx;
+  color: #94a3b8;
+  text-align: center;
+}
