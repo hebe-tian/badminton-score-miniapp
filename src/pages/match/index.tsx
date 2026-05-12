@@ -43,13 +43,10 @@ export default function Match() {
     B: {}
   })
 
-  // 在所有 Hooks 之后再进行条件判断
-  if (!config) {
-    Taro.navigateBack()
-    return null
-  }
-
+  // useEffect 必须在顶层调用，在内部检查 config
   useEffect(() => {
+    if (!config) return
+    
     if (config.mode === 'singles') {
       setCurrentA([0])
       setCurrentB([0])
@@ -102,7 +99,14 @@ export default function Match() {
       
       setPositions(initialPositions)
     }
-  }, [config.mode, config.serverTeam, config.serverIndex, config.receiverIndex])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 在所有 Hooks 之后再进行条件判断
+  if (!config) {
+    Taro.navigateBack()
+    return null
+  }
 
   const addPoint = (scoringTeam: 'A' | 'B') => {
     if (winner) return
