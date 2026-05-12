@@ -43,7 +43,7 @@ export default function Match() {
     B: {}
   })
 
-  // useEffect 必须在条件判断之前调用
+  // useEffect 必须在顶层调用，在内部检查 config
   useEffect(() => {
     if (!config) return
     
@@ -99,7 +99,8 @@ export default function Match() {
       
       setPositions(initialPositions)
     }
-  }, [config])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 在所有 Hooks 之后再进行条件判断
   if (!config) {
