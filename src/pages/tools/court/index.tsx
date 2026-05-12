@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { View, Text, Canvas } from '@tarojs/components'
 import Taro, { useShareAppMessage } from '@tarojs/taro'
 import './index.css'
@@ -18,7 +18,7 @@ export default function CourtSimulator() {
   const isWeapp = process.env.TARO_ENV === 'weapp'
 
   // 初始化Canvas
-  const initCanvas = () => {
+  const initCanvas = useCallback(() => {
     console.log('初始化 Canvas...')
     
     // 使用传统的 Canvas API（兼容性更好）
@@ -42,7 +42,7 @@ export default function CourtSimulator() {
         }
       })
       .exec()
-  }
+  }, [])
 
   // 绘制羽毛球场地背景（基于标准SVG）
   const drawCourtBackground = (ctx: any, width: number, height: number) => {
@@ -367,7 +367,7 @@ export default function CourtSimulator() {
       const timer = setTimeout(() => initCanvas(), 300)
       return () => clearTimeout(timer)
     }
-  }, [isWeapp])
+  }, [isWeapp, initCanvas])
 
   // 配置分享功能
   useShareAppMessage(() => {
