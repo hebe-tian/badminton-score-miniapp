@@ -133,7 +133,13 @@ export default function Match() {
       scoreA: newScoreA, 
       scoreB: newScoreB, 
       scorer: scoringTeam,
-      scorers: scorers
+      scorers: scorers,
+      teamAPlayers: config.mode === 'singles' 
+        ? [config.teamA[0]] 
+        : currentA.map(idx => config.teamA[idx]),
+      teamBPlayers: config.mode === 'singles'
+        ? [config.teamB[0]]
+        : currentB.map(idx => config.teamB[idx])
     }])
 
     let nextServerTeam = serverTeam
@@ -535,15 +541,25 @@ export default function Match() {
                 {history.map((entry, idx) => (
                   <View key={idx} className='history-item'>
                     <Text className='history-index'>#{idx + 1}</Text>
-                    <Text className='history-score'>
-                      {entry.scoreA} - {entry.scoreB}
-                    </Text>
-                    <View className={`history-scorer ${entry.scorer === 'A' ? 'blue' : 'rose'}`}>
-                      {entry.scorers && entry.scorers.length > 0 
-                        ? entry.scorers.map((scorer, scorerIdx) => (
-                            <Text key={scorerIdx} className='scorer-name'>{scorer}</Text>
-                          ))
-                        : <Text className='scorer-name'>{`${entry.scorer}队得分`}</Text>}
+                    {/* 显示两队场上选手 */}
+                    <View className='history-players-row'>
+                      <View className={`player-info ${entry.scorer === 'A' ? 'scoring-team' : ''}`}>
+                        <View className='player-names-container'>
+                          {entry.teamAPlayers?.map((player, pIdx) => (
+                            <Text key={pIdx} className='player-name-item blue'>{player}</Text>
+                          ))}
+                        </View>
+                      </View>
+                      <Text className='history-score-center'>
+                        {entry.scoreA} - {entry.scoreB}
+                      </Text>
+                      <View className={`player-info ${entry.scorer === 'B' ? 'scoring-team' : ''}`}>
+                        <View className='player-names-container'>
+                          {entry.teamBPlayers?.map((player, pIdx) => (
+                            <Text key={pIdx} className='player-name-item rose'>{player}</Text>
+                          ))}
+                        </View>
+                      </View>
                     </View>
                   </View>
                 ))}

@@ -9,7 +9,7 @@
 
 一个基于 Taro + React 开发的跨端羽毛球计分应用，支持微信小程序和 H5。
 
-[功能特性](#-功能特性) • [快速开始](#-快速开始) • [使用文档](#-使用文档) • [开发指南](#-开发指南) • [Git设置](./GIT_SETUP.md)
+[功能特性](#-功能特性) • [快速开始](#-快速开始) • [使用文档](#-使用文档)
 
 </div>
 
@@ -160,11 +160,6 @@ python3 -m pytest tests/ -v
 
 ---
 
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 Pull Request！详细请参考 [CONTRIBUTING.md](./CONTRIBUTING.md)
-
----
 
 ## 📄 License
 

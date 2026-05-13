@@ -6,6 +6,7 @@ node_modules/
 .DS_Store
 .swc
 *.local
+reports/
 
 # Environment variables
 .env.local

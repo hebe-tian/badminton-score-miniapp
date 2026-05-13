@@ -312,21 +312,30 @@ class TestSinglesMode:
         print(f"第1条记录: {first_entry}")
         assert first_entry['index'] == "#1"
         assert first_entry['score'] == "1 - 0"
-        # 单打模式显示 "A" 或 "B"
-        assert first_entry['scorer'] in ["A", "B", "A队", "B队", "Atest", "Btest"], f"单打得分方应该是 A 或 B，实际是: {first_entry['scorer']}"
+        # 单打模式每队应该有1名球员
+        assert len(first_entry['teamAPlayers']) == 1, f"单打A队应该有1名球员，实际有: {len(first_entry['teamAPlayers'])}"
+        assert len(first_entry['teamBPlayers']) == 1, f"单打B队应该有1名球员，实际有: {len(first_entry['teamBPlayers'])}"
+        # 单打模式显示球员名称
+        assert first_entry['scorer'] in ["A", "B", "A队", "B队", "Atest", "Btest"] or \
+               "Atest" in first_entry['scorer'] or "Btest" in first_entry['scorer'], \
+               f"单打得分方应该是 A 或 B，实际是: {first_entry['scorer']}"
         
         # 验证最后一条记录
         last_entry = self.match.get_history_entry(6)
         print(f"第7条记录: {last_entry}")
         assert last_entry['index'] == "#7"
         assert last_entry['score'] == "5 - 2"
-        assert last_entry['scorer'] in ["A", "B", "A队", "B队", "Atest", "Btest"], f"单打得分方应该是 A 或 B，实际是: {last_entry['scorer']}"
+        assert len(last_entry['teamAPlayers']) == 1, f"单打A队应该有1名球员，实际有: {len(last_entry['teamAPlayers'])}"
+        assert len(last_entry['teamBPlayers']) == 1, f"单打B队应该有1名球员，实际有: {len(last_entry['teamBPlayers'])}"
+        assert last_entry['scorer'] in ["A", "B", "A队", "B队", "Atest", "Btest"] or \
+               "Atest" in last_entry['scorer'] or "Btest" in last_entry['scorer'], \
+               f"单打得分方应该是 A 或 B，实际是: {last_entry['scorer']}"
         
         # 获取所有记录并验证
         all_entries = self.match.get_all_history_entries()
         print(f"\n所有得分记录:")
         for entry in all_entries:
-            print(f"  {entry['index']}: {entry['score']} - {entry['scorer']}")
+            print(f"  {entry['index']}: {entry['score']} - A队:{entry['teamAPlayers']} B队:{entry['teamBPlayers']}")
         
         assert len(all_entries) == 7
         

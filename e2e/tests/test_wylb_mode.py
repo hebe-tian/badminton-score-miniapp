@@ -731,6 +731,8 @@ class TestWYLBMode:
         assert first_entry['index'] == "#1"
         assert first_entry['score'] == "1 - 0"
         # 五羽伦比应该显示具体球员名称
+        assert len(first_entry['teamAPlayers']) > 0, "A队应该有场上球员"
+        assert len(first_entry['teamBPlayers']) > 0, "B队应该有场上球员"
         assert "Atest" in first_entry['scorer'], f"五羽伦比应显示球员名称，实际是: {first_entry['scorer']}"
         
         # 验证最后一条记录
@@ -738,16 +740,18 @@ class TestWYLBMode:
         print(f"第50条记录: {last_entry}")
         assert last_entry['index'] == "#50"
         assert last_entry['score'] == "50 - 0"
+        assert len(last_entry['teamAPlayers']) > 0, "A队应该有场上球员"
+        assert len(last_entry['teamBPlayers']) > 0, "B队应该有场上球员"
         assert "Atest" in last_entry['scorer'], f"五羽伦比应显示球员名称，实际是: {last_entry['scorer']}"
         
         # 获取所有记录并验证
         all_entries = self.match.get_all_history_entries()
         print(f"\n所有得分记录（前5条和后5条）:")
         for entry in all_entries[:5]:
-            print(f"  {entry['index']}: {entry['score']} - {entry['scorer']}")
+            print(f"  {entry['index']}: {entry['score']} - A队:{entry['teamAPlayers']} B队:{entry['teamBPlayers']}")
         print("  ...")
         for entry in all_entries[-5:]:
-            print(f"  {entry['index']}: {entry['score']} - {entry['scorer']}")
+            print(f"  {entry['index']}: {entry['score']} - A队:{entry['teamAPlayers']} B队:{entry['teamBPlayers']}")
         
         assert len(all_entries) == 50
         
@@ -756,5 +760,8 @@ class TestWYLBMode:
             scorer = entry['scorer']
             # 五羽伦比模式下，应该显示球员名称
             assert "Atest" in scorer or "Btest" in scorer, f"五羽伦比得分记录应包含球员名称，实际是: {scorer}"
+            # 验证每队都有场上球员
+            assert len(entry['teamAPlayers']) > 0, f"记录 {entry['index']} A队应该有场上球员"
+            assert len(entry['teamBPlayers']) > 0, f"记录 {entry['index']} B队应该有场上球员"
         
         print("\n五羽伦比比赛得分列表验证通过！")

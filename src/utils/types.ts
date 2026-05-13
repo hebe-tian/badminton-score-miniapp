@@ -16,6 +16,8 @@ export interface MatchHistoryEntry {
   scoreB: number;
   scorer: 'A' | 'B';
   scorers?: string[]; // 得分时的场上球员名单
+  teamAPlayers?: string[]; // 得分时A队场上选手
+  teamBPlayers?: string[]; // 得分时B队场上选手
   note?: string;
 }
 
