@@ -44,14 +44,14 @@ class TestToolsPage:
         else:
             print("⚠️ 电子硬币卡片未找到，跳过测试")
 
-    def test_navigate_to_court(self, page):
-        """测试可以跳转到球场模拟器页面"""
+    def test_navigate_to_full_court(self, page):
+        """测试可以跳转到全场模拟器页面"""
         # 访问工具页面
         page.goto('/#/pages/tools/index')
         page.wait_for_selector('.tools-grid', state='visible', timeout=10000)
         
-        # 点击球场模拟器卡片
-        court_card = page.query_selector('.tool-card:has-text("球场模拟器")')
+        # 点击全场模拟器卡片
+        court_card = page.query_selector('.tool-card:has-text("全场模拟器")')
         if court_card:
             court_card.click()
             
@@ -62,6 +62,50 @@ class TestToolsPage:
             current_url = page.url
             assert 'pages/tools/court/index' in current_url, f"跳转失败，当前URL: {current_url}"
             
-            print("✅ 成功跳转到球场模拟器页面")
+            print("✅ 成功跳转到全场模拟器页面")
         else:
-            print("⚠️ 球场模拟器卡片未找到，跳过测试")
+            print("⚠️ 全场模拟器卡片未找到，跳过测试")
+
+    def test_navigate_to_half_court(self, page):
+        """测试可以跳转到半场模拟器页面"""
+        # 访问工具页面
+        page.goto('/#/pages/tools/index')
+        page.wait_for_selector('.tools-grid', state='visible', timeout=10000)
+        
+        # 点击半场模拟器卡片
+        half_court_card = page.query_selector('.tool-card:has-text("半场模拟器")')
+        if half_court_card:
+            half_court_card.click()
+            
+            # 等待跳转
+            page.wait_for_url('**/pages/tools/half-court/index', timeout=10000)
+            
+            # 验证URL变化
+            current_url = page.url
+            assert 'pages/tools/half-court/index' in current_url, f"跳转失败，当前URL: {current_url}"
+            
+            print("✅ 成功跳转到半场模拟器页面")
+        else:
+            print("⚠️ 半场模拟器卡片未找到，跳过测试")
+
+    def test_navigate_to_net_court(self, page):
+        """测试可以跳转到网前模拟器页面"""
+        # 访问工具页面
+        page.goto('/#/pages/tools/index')
+        page.wait_for_selector('.tools-grid', state='visible', timeout=10000)
+        
+        # 点击网前模拟器卡片
+        net_court_card = page.query_selector('.tool-card:has-text("网前模拟器")')
+        if net_court_card:
+            net_court_card.click()
+            
+            # 等待跳转
+            page.wait_for_url('**/pages/tools/net-court/index', timeout=10000)
+            
+            # 验证URL变化
+            current_url = page.url
+            assert 'pages/tools/net-court/index' in current_url, f"跳转失败，当前URL: {current_url}"
+            
+            print("✅ 成功跳转到网前模拟器页面")
+        else:
+            print("⚠️ 网前模拟器卡片未找到，跳过测试")
