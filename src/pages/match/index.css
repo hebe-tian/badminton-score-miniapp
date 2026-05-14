@@ -576,6 +576,84 @@
   color: #f43f5e;
 }
 
+/* 历史明细中两队场上选手展示样式 */
+.history-players-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 8rpx;
+  padding-top: 8rpx;
+  border-top: 1rpx solid #f1f5f9;
+  gap: 12rpx;
+}
+
+.player-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  font-size: 24rpx;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+  transition: all 0.2s;
+}
+
+.player-info.scoring-team {
+  background-color: #fef3c7;
+  font-weight: 600;
+}
+
+.scoring-indicator {
+  font-size: 20rpx;
+  margin-right: 4rpx;
+}
+
+.player-label {
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 24rpx;
+}
+
+.player-label.blue {
+  color: #3b82f6;
+}
+
+.player-label.rose {
+  color: #f43f5e;
+}
+
+.player-names-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+  align-items: center;
+}
+
+.player-name-item {
+  color: #475569;
+  font-size: 24rpx;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.player-name-item.blue {
+  color: #3b82f6;
+}
+
+.player-name-item.rose {
+  color: #f43f5e;
+}
+
+.history-score-center {
+  font-family: monospace;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 28rpx;
+  white-space: nowrap;
+  padding: 0 8rpx;
+}
+
 .game-over-footer {
   padding: 32rpx;
   background-color: #ffffff;

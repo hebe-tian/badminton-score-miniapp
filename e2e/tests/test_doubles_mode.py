@@ -506,6 +506,8 @@ class TestDoublesMode:
         assert first_entry['index'] == "#1"
         assert first_entry['score'] == "1 - 0"
         # 双打应该显示具体球员名称
+        assert len(first_entry['teamAPlayers']) == 2, f"双打A队应该有2名球员，实际有: {len(first_entry['teamAPlayers'])}"
+        assert len(first_entry['teamBPlayers']) == 2, f"双打B队应该有2名球员，实际有: {len(first_entry['teamBPlayers'])}"
         assert "Atest" in first_entry['scorer'], f"双打应显示球员名称，实际是: {first_entry['scorer']}"
         
         # 验证最后一条记录
@@ -513,13 +515,15 @@ class TestDoublesMode:
         print(f"第8条记录: {last_entry}")
         assert last_entry['index'] == "#8"
         assert last_entry['score'] == "5 - 3"
+        assert len(last_entry['teamAPlayers']) == 2, f"双打A队应该有2名球员，实际有: {len(last_entry['teamAPlayers'])}"
+        assert len(last_entry['teamBPlayers']) == 2, f"双打B队应该有2名球员，实际有: {len(last_entry['teamBPlayers'])}"
         assert "Atest" in last_entry['scorer'], f"双打应显示球员名称，实际是: {last_entry['scorer']}"
         
         # 获取所有记录并验证
         all_entries = self.match.get_all_history_entries()
         print(f"\n所有得分记录:")
         for entry in all_entries:
-            print(f"  {entry['index']}: {entry['score']} - {entry['scorer']}")
+            print(f"  {entry['index']}: {entry['score']} - A队:{entry['teamAPlayers']} B队:{entry['teamBPlayers']}")
         
         assert len(all_entries) == 8
         
@@ -528,5 +532,8 @@ class TestDoublesMode:
             scorer = entry['scorer']
             # 双打模式下，应该显示球员名称，如 "Atest1、Atest2"
             assert "Atest" in scorer or "Btest" in scorer, f"双打得分记录应包含球员名称，实际是: {scorer}"
+            # 验证每队都有2名球员
+            assert len(entry['teamAPlayers']) == 2, f"记录 {entry['index']} 双打A队应该有2名球员"
+            assert len(entry['teamBPlayers']) == 2, f"记录 {entry['index']} 双打B队应该有2名球员"
         
         print("\n双打比赛得分列表验证通过！")

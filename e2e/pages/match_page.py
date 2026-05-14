@@ -22,8 +22,9 @@ class MatchPage(BasePage):
     HISTORY_LIST = ".history-list"
     HISTORY_ITEM = ".history-item"
     HISTORY_INDEX = ".history-index"
-    HISTORY_SCORE = ".history-score"
-    HISTORY_SCORER = ".history-scorer"
+    HISTORY_SCORE_CENTER = ".history-score-center"
+    PLAYER_NAMES_CONTAINER = ".player-names-container"
+    PLAYER_NAME_ITEM = ".player-name-item"
     MODAL_BUTTON = ".modal-button"
     
     def __init__(self, page: Page):
@@ -286,7 +287,7 @@ class MatchPage(BasePage):
         """获取得分列表中指定索引的记录（从0开始）
         
         Returns:
-            dict: {'index': 序号, 'score': '比分', 'scorer': '得分方'}
+            dict: {'index': 序号, 'score': '比分', 'scorer': '得分方球员名称'}
         """
         items = self.page.query_selector_all(self.HISTORY_ITEM)
         if index < 0 or index >= len(items):
@@ -299,24 +300,40 @@ class MatchPage(BasePage):
         index_text = index_elem.text_content().strip() if index_elem else ""
         
         # 获取比分
-        score_elem = item.query_selector(self.HISTORY_SCORE)
+        score_elem = item.query_selector(self.HISTORY_SCORE_CENTER)
         score_text = score_elem.text_content().strip() if score_elem else ""
         
-        # 获取得分方
-        scorer_elem = item.query_selector(self.HISTORY_SCORER)
-        scorer_text = scorer_elem.text_content().strip() if scorer_elem else ""
+        # 获取两队球员名称（A队在左边，B队在右边）
+        player_containers = item.query_selector_all(self.PLAYER_NAMES_CONTAINER)
+        team_a_players = []
+        team_b_players = []
+        
+        if len(player_containers) >= 2:
+            # A队球员（第一个容器）
+            a_names = player_containers[0].query_selector_all(self.PLAYER_NAME_ITEM)
+            team_a_players = [name.text_content().strip() for name in a_names if name.is_visible()]
+            
+            # B队球员（第二个容器）
+            b_names = player_containers[1].query_selector_all(self.PLAYER_NAME_ITEM)
+            team_b_players = [name.text_content().strip() for name in b_names if name.is_visible()]
+        
+        # 合并所有球员名称作为 scorer 字段
+        all_players = team_a_players + team_b_players
+        scorer_text = '、'.join(all_players) if all_players else ""
         
         return {
             'index': index_text,
             'score': score_text,
-            'scorer': scorer_text
+            'scorer': scorer_text,
+            'teamAPlayers': team_a_players,
+            'teamBPlayers': team_b_players
         }
     
     def get_all_history_entries(self) -> list:
         """获取得分列表中的所有记录
         
         Returns:
-            list: [{'index': 序号, 'score': '比分', 'scorer': '得分方'}, ...]
+            list: [{'index': 序号, 'score': '比分', 'scorer': '球员名称', 'teamAPlayers': [], 'teamBPlayers': []}, ...]
         """
         count = self.get_history_list_count()
         entries = []
