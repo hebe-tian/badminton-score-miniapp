@@ -8,7 +8,7 @@ interface DrawPoint {
   y: number
 }
 
-export default function CourtSimulator() {
+export default function NetCourtSimulator() {
   const ctxRef = useRef<any>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [currentPath, setCurrentPath] = useState<DrawPoint[]>([])
@@ -22,7 +22,6 @@ export default function CourtSimulator() {
   const initCanvas = useCallback(() => {
     console.log('初始化 Canvas...')
     
-    // 使用传统的 Canvas API（兼容性更好）
     const ctx = Taro.createCanvasContext('courtCanvas')
     
     if (!ctx) {
@@ -32,139 +31,100 @@ export default function CourtSimulator() {
     
     ctxRef.current = ctx
     
-    // 获取Canvas尺寸
     Taro.createSelectorQuery()
       .select('#courtCanvas')
       .boundingClientRect((res: any) => {
         if (res) {
           console.log('Canvas 尺寸:', res.width, res.height)
-          drawCourtBackground(ctx, res.width, res.height)
+          drawNetCourtBackground(ctx, res.width, res.height)
           ctx.draw()
         }
       })
       .exec()
   }, [])
 
-  // 绘制羽毛球场地背景(基于标准SVG)
-  const drawCourtBackground = (ctx: any, width: number, height: number) => {
-    // SVG原始尺寸: 800 x 1800
-    // 计算缩放比例,保持宽高比
+  // 绘制网前场景背景
+  const drawNetCourtBackground = (ctx: any, width: number, height: number) => {
     const svgWidth = 800
-    const svgHeight = 1800
+    const svgHeight = 600
     const scale = Math.min(width / svgWidth, height / svgHeight)
-      
-    // 计算居中偏移
+    
     const offsetX = (width - svgWidth * scale) / 2
     const offsetY = (height - svgHeight * scale) / 2
-      
-    // 填充浅蓝色背景
-    ctx.setFillStyle('#c0e0ff')
-    ctx.fillRect(0, 0, width, height)
-      
-    // 设置白色线条样式
-    ctx.setStrokeStyle('#ffffff')
-    ctx.setLineWidth(4 * scale)
-    ctx.setLineCap('square')
-      
-    // 辅助函数:转换SVG坐标到Canvas坐标
+    
     const transformX = (x: number) => offsetX + x * scale
     const transformY = (y: number) => offsetY + y * scale
-      
-    // === 双打边线(左右边界) ===
+    
+    // 填充浅绿色背景
+    ctx.setFillStyle('#e0f0e0')
+    ctx.fillRect(0, 0, width, height)
+    
+    // 地面线
+    ctx.setStrokeStyle('#a0b0a0')
+    ctx.setLineWidth(3 * scale)
     ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(150))
-    ctx.lineTo(transformX(60), transformY(1644))
+    ctx.moveTo(transformX(60), transformY(520))
+    ctx.lineTo(transformX(740), transformY(520))
     ctx.stroke()
-      
+    
+    // 网柱
+    ctx.setFillStyle('#88968a')
+    ctx.fillRect(transformX(80), transformY(80), 15 * scale, 440 * scale)
+    ctx.fillRect(transformX(705), transformY(80), 15 * scale, 440 * scale)
+    
+    // 球网背景
+    ctx.setFillStyle('rgba(255, 255, 255, 0.8)')
+    ctx.setStrokeStyle('#b0bec5')
+    ctx.setLineWidth(2 * scale)
+    ctx.fillRect(transformX(95), transformY(80), 610 * scale, 200 * scale)
+    ctx.strokeRect(transformX(95), transformY(80), 610 * scale, 200 * scale)
+    
+    // 球网网格线
+    ctx.setLineWidth(1 * scale)
+    for (let y = 110; y <= 260; y += 30) {
+      ctx.beginPath()
+      ctx.moveTo(transformX(95), transformY(y))
+      ctx.lineTo(transformX(705), transformY(y))
+      ctx.stroke()
+    }
+    
+    // 网顶白带
+    ctx.setFillStyle('#34495e')
+    ctx.fillRect(transformX(95), transformY(78), 610 * scale, 4 * scale)
+    
+    // 双打线（蓝色实线）
+    ctx.setStrokeStyle('#1e88e5')
+    ctx.setLineWidth(4 * scale)
     ctx.beginPath()
-    ctx.moveTo(transformX(740), transformY(150))
-    ctx.lineTo(transformX(740), transformY(1644))
+    ctx.moveTo(transformX(95), transformY(280))
+    ctx.lineTo(transformX(95), transformY(520))
     ctx.stroke()
-      
-    // === 端线(上下边界) ===
+    
     ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(150))
-    ctx.lineTo(transformX(740), transformY(150))
+    ctx.moveTo(transformX(705), transformY(280))
+    ctx.lineTo(transformX(705), transformY(520))
     ctx.stroke()
-      
+    
+    // 单打线（橙色虚线）
+    ctx.setStrokeStyle('#fb8c00')
+    ctx.setLineDash([10 * scale, 8 * scale])
     ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(1644))
-    ctx.lineTo(transformX(740), transformY(1644))
+    ctx.moveTo(transformX(145), transformY(280))
+    ctx.lineTo(transformX(145), transformY(520))
     ctx.stroke()
-  
-    // === 单打边线 ===
+    
     ctx.beginPath()
-    ctx.moveTo(transformX(111), transformY(150))
-    ctx.lineTo(transformX(111), transformY(1644))
+    ctx.moveTo(transformX(655), transformY(280))
+    ctx.lineTo(transformX(655), transformY(520))
     ctx.stroke()
-      
+    ctx.setLineDash([])
+    
+    // 中线（绿色点划线）
+    ctx.setStrokeStyle('#43a047')
+    ctx.setLineDash([15 * scale, 8 * scale, 3 * scale, 8 * scale])
     ctx.beginPath()
-    ctx.moveTo(transformX(689), transformY(150))
-    ctx.lineTo(transformX(689), transformY(1644))
-    ctx.stroke()
-  
-    // === 双打后发球线(距离端线0.72米) ===
-    ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(230))
-    ctx.lineTo(transformX(740), transformY(230))
-    ctx.stroke()
-      
-    ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(1564))
-    ctx.lineTo(transformX(740), transformY(1564))
-    ctx.stroke()
-  
-    // === 前发球线(距离球网1.98米) ===
-    ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(676))
-    ctx.lineTo(transformX(740), transformY(676))
-    ctx.stroke()
-      
-    ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(1118))
-    ctx.lineTo(transformX(740), transformY(1118))
-    ctx.stroke()
-  
-    // === 中线(上半区:端线到前发球线) ===
-    ctx.beginPath()
-    ctx.moveTo(transformX(400), transformY(150))
-    ctx.lineTo(transformX(400), transformY(676))
-    ctx.stroke()
-      
-    // === 中线(下半区:端线到前发球线) ===
-    ctx.beginPath()
-    ctx.moveTo(transformX(400), transformY(1118))
-    ctx.lineTo(transformX(400), transformY(1644))
-    ctx.stroke()
-  
-    // === 端线处的发球区短标记(双打边线与单打边线之间) ===
-    ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(150))
-    ctx.lineTo(transformX(111), transformY(150))
-    ctx.stroke()
-      
-    ctx.beginPath()
-    ctx.moveTo(transformX(689), transformY(150))
-    ctx.lineTo(transformX(740), transformY(150))
-    ctx.stroke()
-      
-    ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(1644))
-    ctx.lineTo(transformX(111), transformY(1644))
-    ctx.stroke()
-      
-    ctx.beginPath()
-    ctx.moveTo(transformX(689), transformY(1644))
-    ctx.lineTo(transformX(740), transformY(1644))
-    ctx.stroke()
-  
-    // === 球网位置:虚线 ===
-    ctx.setStrokeStyle('#ffffff')
-    ctx.setLineWidth(6 * scale)
-    ctx.setLineDash([16 * scale, 12 * scale])
-    ctx.beginPath()
-    ctx.moveTo(transformX(60), transformY(897))
-    ctx.lineTo(transformX(740), transformY(897))
+    ctx.moveTo(transformX(400), transformY(280))
+    ctx.lineTo(transformX(400), transformY(520))
     ctx.stroke()
     ctx.setLineDash([])
   }
@@ -175,26 +135,22 @@ export default function CourtSimulator() {
     
     const ctx = ctxRef.current
     
-    // 获取Canvas尺寸
     Taro.createSelectorQuery()
       .select('#courtCanvas')
       .boundingClientRect((res: any) => {
         if (res) {
-          // 重新绘制背景
-          drawCourtBackground(ctx, res.width, res.height)
+          drawNetCourtBackground(ctx, res.width, res.height)
           
-          // 绘制所有已保存的路径
           ctx.setStrokeStyle('#FF0000')
           ctx.setLineWidth(2)
           ctx.setLineCap('round')
           ctx.setLineJoin('round')
-          ctx.setLineDash([])  // 使用实线
+          ctx.setLineDash([])
           
           allPaths.forEach((path) => {
             if (path.length < 2) return
             
             ctx.beginPath()
-            // 将归一化坐标转换为实际坐标
             ctx.moveTo(path[0].x * res.width, path[0].y * res.height)
             
             for (let i = 1; i < path.length; i++) {
@@ -210,13 +166,11 @@ export default function CourtSimulator() {
       .exec()
   }
 
-  // 获取触摸点在Canvas中的归一化坐标(0-1范围)
+  // 获取触摸点在Canvas中的归一化坐标
   const getTouchPos = (e: any, canvasRect: any) => {
     const touch = e.touches[0]
-    // 使用 clientX/clientY 获取相对于视口的坐标
     const x = touch.clientX - canvasRect.left
     const y = touch.clientY - canvasRect.top
-    // 转换为归一化坐标
     return { 
       x: x / canvasRect.width,
       y: y / canvasRect.height
@@ -235,7 +189,6 @@ export default function CourtSimulator() {
           setIsDrawing(true)
           setCurrentPath([pos])
           
-          // 初始化线条样式为实线
           if (ctxRef.current) {
             ctxRef.current.setLineDash([])
           }
@@ -257,23 +210,21 @@ export default function CourtSimulator() {
           const newPath = [...currentPath, pos]
           setCurrentPath(newPath)
           
-          // 实时绘制
           const ctx = ctxRef.current
           ctx.setStrokeStyle('#FF0000')
           ctx.setLineWidth(2)
           ctx.setLineCap('round')
           ctx.setLineJoin('round')
-          ctx.setLineDash([])  // 使用实线
+          ctx.setLineDash([])
           
           if (newPath.length >= 2) {
             const lastPoint = newPath[newPath.length - 2]
             const currentPoint = newPath[newPath.length - 1]
             ctx.beginPath()
-            // 将归一化坐标转换为实际坐标
             ctx.moveTo(lastPoint.x * res.width, lastPoint.y * res.height)
             ctx.lineTo(currentPoint.x * res.width, currentPoint.y * res.height)
             ctx.stroke()
-            ctx.draw(true) // true表示不重绘之前的内容
+            ctx.draw(true)
           }
         }
       })
@@ -309,7 +260,7 @@ export default function CourtSimulator() {
           .select('#courtCanvas')
           .boundingClientRect((res: any) => {
             if (res) {
-              drawCourtBackground(ctx, res.width, res.height)
+              drawNetCourtBackground(ctx, res.width, res.height)
               ctx.draw()
             }
           })
@@ -324,7 +275,6 @@ export default function CourtSimulator() {
     const newFullscreenState = !isFullscreen
     setIsFullscreen(newFullscreenState)
     
-    // 等待状态更新和DOM渲染完成后重新初始化Canvas
     setTimeout(() => {
       if (isWeapp) {
         initCanvas()
@@ -334,7 +284,7 @@ export default function CourtSimulator() {
 
   // 退出全屏按钮点击
   const handleExitFullscreen = (e: any) => {
-    e.stopPropagation()  // 阻止事件冒泡到Canvas
+    e.stopPropagation()
     console.log('点击退出全屏按钮')
     setIsFullscreen(false)
   }
@@ -361,13 +311,9 @@ export default function CourtSimulator() {
     try {
       Taro.showLoading({ title: '生成图片中...' })
       
-      // 先重绘所有内容（确保最新状态）
       await redrawAllPaths()
-      
-      // 等待绘制完成
       await new Promise(resolve => setTimeout(resolve, 300))
       
-      // 导出Canvas为图片
       const imagePath = await exportCanvasToImage()
       
       Taro.hideLoading()
@@ -379,13 +325,6 @@ export default function CourtSimulator() {
         duration: 2000
       })
       
-      Taro.showToast({
-        title: '点击右上角分享',
-        icon: 'none',
-        duration: 2000
-      })
-      
-      // 保存图片路径，供分享时使用
       ;(window as any).__shareImagePath = imagePath
     } catch (error) {
       Taro.hideLoading()
@@ -397,7 +336,7 @@ export default function CourtSimulator() {
     }
   }
 
-  // 页面加载时初始化Canvas(仅微信小程序环境)
+  // 页面加载时初始化Canvas
   useEffect(() => {
     if (isWeapp) {
       const timer = setTimeout(() => initCanvas(), 300)
@@ -410,7 +349,6 @@ export default function CourtSimulator() {
     if (isWeapp) {
       setTimeout(() => {
         initCanvas()
-        // 如果有已绘制的路径,等待背景绘制完成后再重绘路径
         if (allPaths.length > 0) {
           setTimeout(() => redrawAllPaths(), 100)
         }
@@ -420,13 +358,12 @@ export default function CourtSimulator() {
 
   // 配置分享功能
   useShareAppMessage(() => {
-    // 尝试获取之前生成的图片路径
     const shareImagePath = (window as any).__shareImagePath || ''
     
     return {
-      title: '羽毛球球场模拟器 - 战术绘制工具',
-      path: '/pages/tools/court/index',
-      imageUrl: shareImagePath // 如果有图片则使用，否则使用默认封面
+      title: '羽毛球网前模拟器 - 战术绘制工具',
+      path: '/pages/tools/net-court/index',
+      imageUrl: shareImagePath
     }
   })
 
@@ -435,25 +372,16 @@ export default function CourtSimulator() {
     return (
       <View className='court-container'>
         <View className='court-header'>
-          <Text className='court-title'>球场模拟器</Text>
-          <Text className='court-subtitle'>绘制战术路线和站位</Text>
+          <Text className='court-title'>网前模拟器</Text>
+          <Text className='court-subtitle'>练习网前技术和站位</Text>
         </View>
 
         <View className='platform-notice'>
           <View className='notice-icon'>⚠️</View>
           <Text className='notice-title'>功能暂不支持</Text>
           <Text className='notice-desc'>
-            球场模拟器功能目前仅在微信小程序中可用{'\n'}
+            网前模拟器功能目前仅在微信小程序中可用{'\n'}
             请使用微信扫码或在微信中打开小程序体验完整功能
-          </Text>
-        </View>
-
-        <View className='instruction'>
-          <Text className='instruction-text'>
-            即将支持的功能:{'\n'}
-            • 在球场图上自由绘制战术路线{'\n'}
-            • 撤销和清空操作{'\n'}
-            • 分享绘制结果给好友
           </Text>
         </View>
       </View>
@@ -466,8 +394,8 @@ export default function CourtSimulator() {
       {!isFullscreen && (
         <>
           <View className='court-header'>
-            <Text className='court-title'>全场模拟器</Text>
-            <Text className='court-subtitle'>绘制战术路线和站位</Text>
+            <Text className='court-title'>网前模拟器</Text>
+            <Text className='court-subtitle'>练习网前技术和站位</Text>
           </View>
         </>
       )}
@@ -483,7 +411,6 @@ export default function CourtSimulator() {
           onTouchEnd={handleTouchEnd}
         />
         
-        {/* 全屏切换按钮 */}
         {!isFullscreen && (
           <View className='fullscreen-toggle-btn' onClick={handleToggleFullscreen}>
             <Text>⛶ 全屏</Text>
@@ -496,7 +423,6 @@ export default function CourtSimulator() {
           </View>
         )}
         
-        {/* 全屏模式下的控制按钮 */}
         {isFullscreen && (
           <View className='fullscreen-controls'>
             <View className='action-button undo-button' onClick={handleUndo}>
@@ -509,7 +435,6 @@ export default function CourtSimulator() {
         )}
       </View>
 
-      {/* 非全屏模式下的控制按钮 */}
       {!isFullscreen && (
         <>
           <View className='action-buttons'>
@@ -527,6 +452,7 @@ export default function CourtSimulator() {
           <View className='instruction'>
             <Text className='instruction-text'>
               使用说明:{'\n'}
+              • 网前区域包含球网、网柱和场地线{'\n'}
               • 点击球场可进入/退出全屏模式{'\n'}
               • 在全屏模式下手指滑动绘制战术路线{'\n'}
               • 红色线条标记战术路线和站位{'\n'}

@@ -12,11 +12,25 @@ export default function Tools() {
       path: '/pages/tools/coin/index'
     },
     {
-      id: 'court',
-      name: '球场模拟器',
-      desc: '绘制战术路线和站位',
+      id: 'full-court',
+      name: '全场模拟器',
+      desc: '完整球场，绘制战术路线和站位',
       icon: '🏸',
       path: '/pages/tools/court/index'
+    },
+    {
+      id: 'half-court',
+      name: '半场模拟器',
+      desc: '单个半场，支持上下半场切换',
+      icon: '🎯',
+      path: '/pages/tools/half-court/index'
+    },
+    {
+      id: 'net-court',
+      name: '网前模拟器',
+      desc: '网前区域，练习网前技术和站位',
+      icon: '🥅',
+      path: '/pages/tools/net-court/index'
     }
     // 未来可以添加更多工具
   ]

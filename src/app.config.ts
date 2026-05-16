@@ -4,6 +4,8 @@ export default defineAppConfig({
     'pages/tools/index',
     'pages/tools/coin/index',
     'pages/tools/court/index',
+    'pages/tools/half-court/index',
+    'pages/tools/net-court/index',
     'pages/config/index',
     'pages/match/index'
   ],
