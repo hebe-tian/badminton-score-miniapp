@@ -41,7 +41,7 @@ export default function Tools() {
       success: () => {
         // 跳转成功
       },
-      fail: (err) => {
+      fail: () => {
         // 跳转失败处理
       }
     })
