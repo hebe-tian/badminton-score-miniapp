@@ -21,7 +21,7 @@ export default function Tools() {
     {
       id: 'half-court',
       name: '半场模拟器',
-      desc: '单个半场，支持上下半场切换',
+      desc: '展示半场区域，绘制战术路线',
       icon: '🎯',
       path: '/pages/tools/half-court/index'
     },
@@ -36,14 +36,13 @@ export default function Tools() {
   ]
 
   const handleToolClick = (toolPath: string) => {
-    console.log('点击工具卡片，跳转到:', toolPath)
     Taro.navigateTo({ 
       url: toolPath,
       success: () => {
-        console.log('跳转成功')
+        // 跳转成功
       },
-      fail: (err) => {
-        console.error('跳转失败:', err)
+      fail: () => {
+        // 跳转失败处理
       }
     })
   }

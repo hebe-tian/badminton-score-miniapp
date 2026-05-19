@@ -9,92 +9,122 @@ interface DrawPoint {
 }
 
 export default function NetCourtSimulator() {
+  const canvasRef = useRef<any>(null)
   const ctxRef = useRef<any>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [currentPath, setCurrentPath] = useState<DrawPoint[]>([])
   const [allPaths, setAllPaths] = useState<DrawPoint[][]>([])
-  const [isFullscreen, setIsFullscreen] = useState(false)
   
   // 检测是否为微信小程序环境
   const isWeapp = process.env.TARO_ENV === 'weapp'
 
   // 初始化Canvas
   const initCanvas = useCallback(() => {
-    console.log('初始化 Canvas...')
-    
-    const ctx = Taro.createCanvasContext('courtCanvas')
-    
-    if (!ctx) {
-      console.error('无法创建 Canvas Context')
-      return
-    }
-    
-    ctxRef.current = ctx
-    
-    Taro.createSelectorQuery()
-      .select('#courtCanvas')
-      .boundingClientRect((res: any) => {
-        if (res) {
-          console.log('Canvas 尺寸:', res.width, res.height)
-          drawNetCourtBackground(ctx, res.width, res.height)
-          ctx.draw()
+    const query = Taro.createSelectorQuery()
+    query.select('#courtCanvas')
+      .fields({ node: true, size: true })
+      .exec((res: any) => {
+        if (res && res[0]) {
+          const canvas = res[0].node
+          const ctx = canvas.getContext('2d')
+          const { width, height } = res[0]
+          
+          const dpr = Taro.getWindowInfo().pixelRatio
+          canvas.width = width * dpr
+          canvas.height = height * dpr
+          ctx.scale(dpr, dpr)
+          
+          canvasRef.current = canvas
+          ctxRef.current = ctx
+          
+          drawNetCourtBackground(ctx, width, height)
         }
       })
-      .exec()
   }, [])
 
-  // 绘制网前场景背景
+  // 绘制网前场景背景 - Canvas 2D API
   const drawNetCourtBackground = (ctx: any, width: number, height: number) => {
     const svgWidth = 800
     const svgHeight = 600
-    const scale = Math.min(width / svgWidth, height / svgHeight)
+    // 保持宽高比，放大20.75%
+    const scale = Math.min(width / svgWidth, height / svgHeight) * 1.2075
     
+    // 计算居中偏移
     const offsetX = (width - svgWidth * scale) / 2
-    const offsetY = (height - svgHeight * scale) / 2
+    // 球场下移5%
+    const offsetY = height * 0.05
     
     const transformX = (x: number) => offsetX + x * scale
     const transformY = (y: number) => offsetY + y * scale
     
-    // 填充浅绿色背景
-    ctx.setFillStyle('#e0f0e0')
+    // 填充浅绿色渐变背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, height)
+    gradient.addColorStop(0, '#e8f5e9')
+    gradient.addColorStop(1, '#c8e6c9')
+    ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
     
-    // 地面线
-    ctx.setStrokeStyle('#a0b0a0')
-    ctx.setLineWidth(3 * scale)
+    // 地面线（深绿色）
+    ctx.strokeStyle = '#66bb6a'
+    ctx.lineWidth = 3 * scale
+    ctx.lineCap = 'round'
     ctx.beginPath()
     ctx.moveTo(transformX(60), transformY(520))
     ctx.lineTo(transformX(740), transformY(520))
     ctx.stroke()
     
-    // 网柱
-    ctx.setFillStyle('#88968a')
+    // 网柱（银灰色金属质感）
+    const postGradient = ctx.createLinearGradient(transformX(80), 0, transformX(95), 0)
+    postGradient.addColorStop(0, '#90a4ae')
+    postGradient.addColorStop(0.5, '#cfd8dc')
+    postGradient.addColorStop(1, '#90a4ae')
+    ctx.fillStyle = postGradient
     ctx.fillRect(transformX(80), transformY(80), 15 * scale, 440 * scale)
     ctx.fillRect(transformX(705), transformY(80), 15 * scale, 440 * scale)
     
-    // 球网背景
-    ctx.setFillStyle('rgba(255, 255, 255, 0.8)')
-    ctx.setStrokeStyle('#b0bec5')
-    ctx.setLineWidth(2 * scale)
+    // 网柱阴影
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
+    ctx.fillRect(transformX(95), transformY(80), 3 * scale, 440 * scale)
+    ctx.fillRect(transformX(720), transformY(80), 3 * scale, 440 * scale)
+    
+    // 球网背景（半透明白色）
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
     ctx.fillRect(transformX(95), transformY(80), 610 * scale, 200 * scale)
+    
+    // 球网边框
+    ctx.strokeStyle = '#78909c'
+    ctx.lineWidth = 2 * scale
     ctx.strokeRect(transformX(95), transformY(80), 610 * scale, 200 * scale)
     
-    // 球网网格线
-    ctx.setLineWidth(1 * scale)
+    // 球网网格线（细线）
+    ctx.strokeStyle = '#b0bec5'
+    ctx.lineWidth = 1 * scale
+    // 横线
     for (let y = 110; y <= 260; y += 30) {
       ctx.beginPath()
       ctx.moveTo(transformX(95), transformY(y))
       ctx.lineTo(transformX(705), transformY(y))
       ctx.stroke()
     }
+    // 竖线
+    for (let x = 125; x <= 675; x += 30) {
+      ctx.beginPath()
+      ctx.moveTo(transformX(x), transformY(80))
+      ctx.lineTo(transformX(x), transformY(280))
+      ctx.stroke()
+    }
     
-    // 网顶白带
-    ctx.setFillStyle('#34495e')
-    ctx.fillRect(transformX(95), transformY(78), 610 * scale, 4 * scale)
+    // 网顶白带（加厚）
+    ctx.fillStyle = '#eceff1'
+    ctx.fillRect(transformX(95), transformY(76), 610 * scale, 6 * scale)
+    ctx.strokeStyle = '#546e7a'
+    ctx.lineWidth = 1 * scale
+    ctx.strokeRect(transformX(95), transformY(76), 610 * scale, 6 * scale)
     
-    // 双打线（蓝色实线）
-    ctx.setStrokeStyle('#1e88e5')
-    ctx.setLineWidth(4 * scale)
+    // 双打线（蓝色实线，加粗）
+    ctx.strokeStyle = '#1976d2'
+    ctx.lineWidth = 5 * scale
+    ctx.lineCap = 'round'
     ctx.beginPath()
     ctx.moveTo(transformX(95), transformY(280))
     ctx.lineTo(transformX(95), transformY(520))
@@ -106,8 +136,9 @@ export default function NetCourtSimulator() {
     ctx.stroke()
     
     // 单打线（橙色虚线）
-    ctx.setStrokeStyle('#fb8c00')
-    ctx.setLineDash([10 * scale, 8 * scale])
+    ctx.strokeStyle = '#f57c00'
+    ctx.lineWidth = 4 * scale
+    ctx.setLineDash([12 * scale, 8 * scale])
     ctx.beginPath()
     ctx.moveTo(transformX(145), transformY(280))
     ctx.lineTo(transformX(145), transformY(520))
@@ -120,57 +151,69 @@ export default function NetCourtSimulator() {
     ctx.setLineDash([])
     
     // 中线（绿色点划线）
-    ctx.setStrokeStyle('#43a047')
+    ctx.strokeStyle = '#388e3c'
+    ctx.lineWidth = 4 * scale
     ctx.setLineDash([15 * scale, 8 * scale, 3 * scale, 8 * scale])
     ctx.beginPath()
     ctx.moveTo(transformX(400), transformY(280))
     ctx.lineTo(transformX(400), transformY(520))
     ctx.stroke()
     ctx.setLineDash([])
+    
+    // 添加地面纹理（浅色横线）
+    ctx.strokeStyle = 'rgba(102, 187, 106, 0.3)'
+    ctx.lineWidth = 1 * scale
+    for (let y = 300; y <= 500; y += 40) {
+      ctx.beginPath()
+      ctx.moveTo(transformX(100), transformY(y))
+      ctx.lineTo(transformX(700), transformY(y))
+      ctx.stroke()
+    }
   }
 
-  // 重绘所有路径
+  // 重绘所有路径 - Canvas 2D API
   const redrawAllPaths = () => {
-    if (!ctxRef.current) return
-    
+    const canvas = canvasRef.current
     const ctx = ctxRef.current
+    if (!canvas || !ctx) return
     
-    Taro.createSelectorQuery()
-      .select('#courtCanvas')
-      .boundingClientRect((res: any) => {
-        if (res) {
-          drawNetCourtBackground(ctx, res.width, res.height)
+    const query = Taro.createSelectorQuery()
+    query.select('#courtCanvas')
+      .fields({ size: true })
+      .exec((res: any) => {
+        if (res && res[0]) {
+          const { width, height } = res[0]
+          const dpr = Taro.getWindowInfo().pixelRatio
           
-          ctx.setStrokeStyle('#FF0000')
-          ctx.setLineWidth(2)
-          ctx.setLineCap('round')
-          ctx.setLineJoin('round')
+          // 清除并重绘背景
+          ctx.clearRect(0, 0, width * dpr, height * dpr)
+          drawNetCourtBackground(ctx, width, height)
+          
+          // 设置绘制样式
+          ctx.strokeStyle = '#FF0000'
+          ctx.lineWidth = 2
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
           ctx.setLineDash([])
           
+          // 重绘所有路径
           allPaths.forEach((path) => {
             if (path.length < 2) return
-            
             ctx.beginPath()
-            ctx.moveTo(path[0].x * res.width, path[0].y * res.height)
-            
+            ctx.moveTo(path[0].x * width, path[0].y * height)
             for (let i = 1; i < path.length; i++) {
-              ctx.lineTo(path[i].x * res.width, path[i].y * res.height)
+              ctx.lineTo(path[i].x * width, path[i].y * height)
             }
-            
             ctx.stroke()
           })
-          
-          ctx.draw()
         }
       })
-      .exec()
   }
 
   // 获取触摸点在Canvas中的归一化坐标
   const getTouchPos = (e: any, canvasRect: any) => {
-    const touch = e.touches[0]
-    const x = touch.clientX - canvasRect.left
-    const y = touch.clientY - canvasRect.top
+    const x = e.touches[0].clientX - canvasRect.left
+    const y = e.touches[0].clientY - canvasRect.top
     return { 
       x: x / canvasRect.width,
       y: y / canvasRect.height
@@ -185,12 +228,13 @@ export default function NetCourtSimulator() {
       .select('#courtCanvas')
       .boundingClientRect((res: any) => {
         if (res) {
-          const pos = getTouchPos(e, res)
+          const point = getTouchPos(e, res)
           setIsDrawing(true)
-          setCurrentPath([pos])
+          setCurrentPath([point])
           
-          if (ctxRef.current) {
-            ctxRef.current.setLineDash([])
+          const ctx = ctxRef.current
+          if (ctx) {
+            ctx.setLineDash([])
           }
         }
       })
@@ -211,10 +255,10 @@ export default function NetCourtSimulator() {
           setCurrentPath(newPath)
           
           const ctx = ctxRef.current
-          ctx.setStrokeStyle('#FF0000')
-          ctx.setLineWidth(2)
-          ctx.setLineCap('round')
-          ctx.setLineJoin('round')
+          ctx.strokeStyle = '#FF0000'
+          ctx.lineWidth = 2
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
           ctx.setLineDash([])
           
           if (newPath.length >= 2) {
@@ -224,7 +268,6 @@ export default function NetCourtSimulator() {
             ctx.moveTo(lastPoint.x * res.width, lastPoint.y * res.height)
             ctx.lineTo(currentPoint.x * res.width, currentPoint.y * res.height)
             ctx.stroke()
-            ctx.draw(true)
           }
         }
       })
@@ -254,52 +297,34 @@ export default function NetCourtSimulator() {
     setAllPaths([])
     setCurrentPath([])
     setTimeout(() => {
-      if (ctxRef.current) {
-        const ctx = ctxRef.current
-        Taro.createSelectorQuery()
-          .select('#courtCanvas')
-          .boundingClientRect((res: any) => {
-            if (res) {
-              drawNetCourtBackground(ctx, res.width, res.height)
-              ctx.draw()
+      const canvas = canvasRef.current
+      const ctx = ctxRef.current
+      if (canvas && ctx) {
+        const query = Taro.createSelectorQuery()
+        query.select('#courtCanvas')
+          .fields({ size: true })
+          .exec((res: any) => {
+            if (res && res[0]) {
+              const dpr = Taro.getWindowInfo().pixelRatio
+              ctx.clearRect(0, 0, res[0].width * dpr, res[0].height * dpr)
+              drawNetCourtBackground(ctx, res[0].width, res[0].height)
             }
           })
-          .exec()
       }
     }, 50)
   }
 
-  // 切换全屏
-  const handleToggleFullscreen = () => {
-    console.log('切换全屏, 当前状态:', isFullscreen)
-    const newFullscreenState = !isFullscreen
-    setIsFullscreen(newFullscreenState)
-    
-    setTimeout(() => {
-      if (isWeapp) {
-        initCanvas()
-      }
-    }, 100)
-  }
 
-  // 退出全屏按钮点击
-  const handleExitFullscreen = (e: any) => {
-    e.stopPropagation()
-    console.log('点击退出全屏按钮')
-    setIsFullscreen(false)
-  }
 
   // 将Canvas导出为图片
   const exportCanvasToImage = (): Promise<string> => {
     return new Promise((resolve, reject) => {
       Taro.canvasToTempFilePath({
-        canvasId: 'courtCanvas',
+        canvas: canvasRef.current,
         success: (res) => {
-          console.log('Canvas导出成功:', res.tempFilePath)
           resolve(res.tempFilePath)
         },
         fail: (err) => {
-          console.error('Canvas导出失败:', err)
           reject(err)
         }
       })
@@ -332,7 +357,6 @@ export default function NetCourtSimulator() {
         title: '生成图片失败',
         icon: 'none'
       })
-      console.error('分享失败:', error)
     }
   }
 
@@ -344,17 +368,7 @@ export default function NetCourtSimulator() {
     }
   }, [isWeapp, initCanvas])
   
-  // 全屏切换时重绘
-  useEffect(() => {
-    if (isWeapp) {
-      setTimeout(() => {
-        initCanvas()
-        if (allPaths.length > 0) {
-          setTimeout(() => redrawAllPaths(), 100)
-        }
-      }, 150)
-    }
-  }, [isFullscreen])
+
 
   // 配置分享功能
   useShareAppMessage(() => {
@@ -373,7 +387,6 @@ export default function NetCourtSimulator() {
       <View className='court-container'>
         <View className='court-header'>
           <Text className='court-title'>网前模拟器</Text>
-          <Text className='court-subtitle'>练习网前技术和站位</Text>
         </View>
 
         <View className='platform-notice'>
@@ -391,18 +404,13 @@ export default function NetCourtSimulator() {
   // 小程序环境 - 完整功能
   return (
     <View className='court-container'>
-      {!isFullscreen && (
-        <>
-          <View className='court-header'>
-            <Text className='court-title'>网前模拟器</Text>
-            <Text className='court-subtitle'>练习网前技术和站位</Text>
-          </View>
-        </>
-      )}
+      <View className='court-header'>
+        <Text className='court-title'>网前模拟器</Text>
+      </View>
 
-      <View className={`canvas-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
+      <View className='canvas-wrapper'>
         <Canvas
-          canvasId='courtCanvas'
+          type='2d'
           id='courtCanvas'
           className='court-canvas'
           disableScroll
@@ -410,58 +418,19 @@ export default function NetCourtSimulator() {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         />
-        
-        {!isFullscreen && (
-          <View className='fullscreen-toggle-btn' onClick={handleToggleFullscreen}>
-            <Text>⛶ 全屏</Text>
-          </View>
-        )}
-        
-        {isFullscreen && (
-          <View className='exit-fullscreen-hint' onClick={handleExitFullscreen}>
-            <Text>✕ 退出全屏</Text>
-          </View>
-        )}
-        
-        {isFullscreen && (
-          <View className='fullscreen-controls'>
-            <View className='action-button undo-button' onClick={handleUndo}>
-              <Text>撤销</Text>
-            </View>
-            <View className='action-button clear-button' onClick={handleClear}>
-              <Text>清空</Text>
-            </View>
-          </View>
-        )}
       </View>
 
-      {!isFullscreen && (
-        <>
-          <View className='action-buttons'>
-            <View className='action-button undo-button' onClick={handleUndo}>
-              <Text>撤销</Text>
-            </View>
-            <View className='action-button clear-button' onClick={handleClear}>
-              <Text>清空</Text>
-            </View>
-            <View className='action-button share-button' onClick={handleShare}>
-              <Text>分享</Text>
-            </View>
-          </View>
-
-          <View className='instruction'>
-            <Text className='instruction-text'>
-              使用说明:{'\n'}
-              • 网前区域包含球网、网柱和场地线{'\n'}
-              • 点击球场可进入/退出全屏模式{'\n'}
-              • 在全屏模式下手指滑动绘制战术路线{'\n'}
-              • 红色线条标记战术路线和站位{'\n'}
-              • 点击撤销可删除最后一步{'\n'}
-              • 点击右上角分享给好友
-            </Text>
-          </View>
-        </>
-      )}
+      <View className='action-buttons'>
+        <View className='action-button undo-button' onClick={handleUndo}>
+          <Text>撤销</Text>
+        </View>
+        <View className='action-button clear-button' onClick={handleClear}>
+          <Text>清空</Text>
+        </View>
+        <View className='action-button share-button' onClick={handleShare}>
+          <Text>分享</Text>
+        </View>
+      </View>
     </View>
   )
 }
