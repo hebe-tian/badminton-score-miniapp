@@ -1,0 +1,379 @@
+.mt-config-container {
+  min-height: 100vh;
+  background-color: #0f172a;
+  padding: 48rpx;
+  padding-bottom: 180rpx;
+}
+
+.mt-config-header {
+  margin-bottom: 40rpx;
+}
+
+.mt-config-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.mt-config-subtitle {
+  font-size: 28rpx;
+  color: #94a3b8;
+  display: block;
+}
+
+.mt-tip-bar {
+  background: rgba(16, 185, 129, 0.15);
+  border: 2rpx solid rgba(16, 185, 129, 0.3);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 40rpx;
+}
+
+.mt-tip-text {
+  font-size: 26rpx;
+  color: #10b981;
+}
+
+/* 模式选择 */
+.mt-section-title {
+  font-size: 26rpx;
+  color: #94a3b8;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.mt-mode-cards {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 40rpx;
+}
+
+.mt-mode-card {
+  flex: 1;
+  border-radius: 20rpx;
+  padding: 32rpx 24rpx;
+  text-align: center;
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+}
+
+.mt-mode-card.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+}
+
+.mt-mode-card:active {
+  transform: scale(0.95);
+}
+
+.mt-mode-icon {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+
+.mt-mode-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.mt-mode-card.active .mt-mode-name {
+  color: #10b981;
+}
+
+.mt-mode-desc {
+  font-size: 24rpx;
+  color: #94a3b8;
+  line-height: 1.4;
+  display: block;
+}
+
+/* 配置区域 */
+.mt-config-section {
+  margin-bottom: 36rpx;
+}
+
+.mt-score-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.mt-score-option {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.1);
+  border-radius: 16rpx;
+  padding: 16rpx 32rpx;
+  color: #94a3b8;
+  font-size: 28rpx;
+  transition: all 0.2s;
+}
+
+.mt-score-option.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+  font-weight: bold;
+}
+
+.mt-deuce-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.mt-deuce-option {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.1);
+  border-radius: 16rpx;
+  padding: 16rpx 32rpx;
+  color: #94a3b8;
+  font-size: 28rpx;
+  transition: all 0.2s;
+}
+
+.mt-deuce-option.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+  font-weight: bold;
+}
+
+.mt-custom-score-input {
+  margin-top: 16rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  color: #ffffff;
+  font-size: 28rpx;
+}
+
+/* 选手列表 */
+.mt-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.mt-player-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.mt-player-index {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.mt-player-index.female {
+  background: #f43f5e;
+}
+
+.mt-player-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  color: #ffffff;
+  font-size: 28rpx;
+}
+
+.mt-gender-picker {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  border-radius: 12rpx;
+  padding: 12rpx 20rpx;
+  color: #94a3b8;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
+.mt-gender-picker.male {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+}
+
+.mt-gender-picker.female {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+}
+
+.mt-add-player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 20rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx dashed rgba(255, 255, 255, 0.2);
+  border-radius: 16rpx;
+  margin-top: 8rpx;
+}
+
+.mt-add-player-text {
+  color: #10b981;
+  font-size: 28rpx;
+}
+
+.mt-gender-stats {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 12rpx;
+}
+
+.mt-gender-stat-male {
+  color: #3b82f6;
+  font-size: 24rpx;
+}
+
+.mt-gender-stat-female {
+  color: #f43f5e;
+  font-size: 24rpx;
+}
+
+/* 轮次设置 */
+.mt-rounds-display {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.15);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mt-rounds-label {
+  color: #94a3b8;
+  font-size: 28rpx;
+}
+
+.mt-rounds-value {
+  color: #10b981;
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.mt-rounds-hint {
+  color: #64748b;
+  font-size: 24rpx;
+  margin-top: 8rpx;
+}
+
+.mt-rounds-warning {
+  color: #f59e0b;
+  font-size: 24rpx;
+  margin-top: 8rpx;
+}
+
+.mt-rounds-adjust {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 16rpx;
+}
+
+.mt-rounds-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.mt-rounds-btn:active {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.mt-rounds-current {
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: bold;
+  min-width: 60rpx;
+  text-align: center;
+}
+
+/* 底部按钮 */
+.mt-config-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx 48rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: #0f172a;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.mt-generate-btn {
+  background: #10b981;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  text-align: center;
+}
+
+.mt-generate-btn.disabled {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mt-generate-btn-text {
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.mt-generate-btn.disabled .mt-generate-btn-text {
+  color: #64748b;
+}
+
+/* 模式标签 */
+.mt-mode-tag {
+  display: inline-block;
+  border-radius: 12rpx;
+  padding: 6rpx 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.mt-mode-tag.random {
+  background: rgba(16, 185, 129, 0.2);
+  border: 2rpx solid rgba(16, 185, 129, 0.4);
+}
+
+.mt-mode-tag.mixed {
+  background: rgba(244, 63, 94, 0.2);
+  border: 2rpx solid rgba(244, 63, 94, 0.4);
+}
+
+.mt-mode-tag-text {
+  font-size: 24rpx;
+}
+
+.mt-mode-tag.random .mt-mode-tag-text {
+  color: #10b981;
+}
+
+.mt-mode-tag.mixed .mt-mode-tag-text {
+  color: #f43f5e;
+}
