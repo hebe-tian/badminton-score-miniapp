@@ -4,8 +4,10 @@ export default defineAppConfig({
     'pages/tools/index',
     'pages/tools/coin/index',
     'pages/tools/court/index',
-    'pages/tools/half-court/index',
     'pages/tools/net-court/index',
+    'pages/tools/multi-turn/config/index',
+    'pages/tools/multi-turn/schedule/index',
+    'pages/tools/multi-turn/ranking/index',
     'pages/config/index',
     'pages/match/index'
   ],

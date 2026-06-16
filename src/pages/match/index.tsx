@@ -243,6 +243,15 @@ export default function Match() {
 
     if (gameIsOver) {
       setWinner(newWinner)
+      // 多人转模式：回传分数
+      if (params?.multiTurn === 'true' && params?.round) {
+        const round = parseInt(params.round)
+        Taro.setStorageSync('multiTurnScoreBack', JSON.stringify({
+          round,
+          scoreA: newScoreA,
+          scoreB: newScoreB,
+        }))
+      }
       return
     }
 
@@ -567,15 +576,26 @@ export default function Match() {
             </View>
 
             <View className='game-over-footer'>
-              <View className='footer-button restart' onClick={handleRestart}>
-                <Text className='footer-button-text'>重新开始</Text>
-              </View>
-              <View
-                className='footer-button home'
-                onClick={() => Taro.navigateTo({ url: '/pages/home/index' })}
-              >
-                <Text className='footer-button-text'>回到主页</Text>
-              </View>
+              {params?.multiTurn === 'true' ? (
+                <View
+                  className='footer-button home'
+                  onClick={() => Taro.navigateBack()}
+                >
+                  <Text className='footer-button-text'>返回对阵表</Text>
+                </View>
+              ) : (
+                <>
+                  <View className='footer-button restart' onClick={handleRestart}>
+                    <Text className='footer-button-text'>重新开始</Text>
+                  </View>
+                  <View
+                    className='footer-button home'
+                    onClick={() => Taro.navigateTo({ url: '/pages/home/index' })}
+                  >
+                    <Text className='footer-button-text'>回到主页</Text>
+                  </View>
+                </>
+              )}
             </View>
           </View>
         </View>

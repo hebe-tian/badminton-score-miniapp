@@ -19,20 +19,19 @@ export default function Tools() {
       path: '/pages/tools/court/index'
     },
     {
-      id: 'half-court',
-      name: '半场模拟器',
-      desc: '展示半场区域，绘制战术路线',
-      icon: '🎯',
-      path: '/pages/tools/half-court/index'
-    },
-    {
       id: 'net-court',
       name: '网前模拟器',
       desc: '网前区域，练习网前技术和站位',
       icon: '🥅',
       path: '/pages/tools/net-court/index'
+    },
+    {
+      id: 'multi-turn',
+      name: '多人转',
+      desc: 'N人轮转双打，自动编排搭档',
+      icon: '🔄',
+      path: '/pages/tools/multi-turn/config/index'
     }
-    // 未来可以添加更多工具
   ]
 
   const handleToolClick = (toolPath: string) => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-手动更新半场和网前模拟器为Canvas 2D API
+手动更新网前模拟器为Canvas 2D API
 由于正则替换复杂，这里提供详细的修改说明
 """
 
@@ -8,8 +8,7 @@ print("""
 === Canvas 2D API 更新清单 ===
 
 需要修改的文件:
-1. src/pages/tools/half-court/index.tsx
-2. src/pages/tools/net-court/index.tsx
+1. src/pages/tools/net-court/index.tsx
 
 主要改动点:
 1. 添加 canvasRef = useRef<any>(null)

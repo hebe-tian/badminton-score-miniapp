@@ -1,0 +1,260 @@
+.mt-ranking-container {
+  min-height: 100vh;
+  background-color: #0f172a;
+  padding: 32rpx;
+  padding-bottom: 48rpx;
+}
+
+.mt-ranking-header {
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.mt-ranking-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.mt-ranking-info {
+  font-size: 24rpx;
+  color: #94a3b8;
+  display: block;
+}
+
+/* 领奖台 */
+.mt-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 40rpx;
+  height: 280rpx;
+}
+
+.mt-podium-item {
+  flex: 1;
+  text-align: center;
+  border-radius: 16rpx 16rpx 0 0;
+  padding: 20rpx 12rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.mt-podium-item.second {
+  background: rgba(148, 163, 184, 0.15);
+  border: 2rpx solid rgba(148, 163, 184, 0.3);
+  height: 160rpx;
+}
+
+.mt-podium-item.first {
+  background: rgba(251, 191, 36, 0.15);
+  border: 2rpx solid rgba(251, 191, 36, 0.3);
+  height: 200rpx;
+}
+
+.mt-podium-item.third {
+  background: rgba(180, 83, 9, 0.15);
+  border: 2rpx solid rgba(180, 83, 9, 0.3);
+  height: 120rpx;
+}
+
+.mt-podium-pos {
+  font-weight: bold;
+  display: block;
+}
+
+.mt-podium-item.second .mt-podium-pos {
+  color: #94a3b8;
+  font-size: 36rpx;
+}
+
+.mt-podium-item.first .mt-podium-pos {
+  color: #fbbf24;
+  font-size: 44rpx;
+}
+
+.mt-podium-item.third .mt-podium-pos {
+  color: #d97706;
+  font-size: 32rpx;
+}
+
+.mt-podium-name {
+  color: #ffffff;
+  font-weight: bold;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.mt-podium-item.second .mt-podium-name {
+  font-size: 26rpx;
+}
+
+.mt-podium-item.first .mt-podium-name {
+  font-size: 28rpx;
+}
+
+.mt-podium-item.third .mt-podium-name {
+  font-size: 24rpx;
+}
+
+.mt-podium-score {
+  display: block;
+  margin-top: 4rpx;
+}
+
+.mt-podium-item.second .mt-podium-score {
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.mt-podium-item.first .mt-podium-score {
+  color: #fbbf24;
+  font-size: 26rpx;
+}
+
+.mt-podium-item.third .mt-podium-score {
+  color: #d97706;
+  font-size: 22rpx;
+}
+
+/* 完整排名列表 */
+.mt-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.mt-ranking-row {
+  display: flex;
+  align-items: center;
+  border-radius: 16rpx;
+  padding: 20rpx;
+}
+
+.mt-ranking-row.gold {
+  background: rgba(251, 191, 36, 0.1);
+  border: 2rpx solid rgba(251, 191, 36, 0.2);
+}
+
+.mt-ranking-row.silver {
+  background: rgba(148, 163, 184, 0.08);
+  border: 2rpx solid rgba(148, 163, 184, 0.15);
+}
+
+.mt-ranking-row.bronze {
+  background: rgba(180, 83, 9, 0.08);
+  border: 2rpx solid rgba(180, 83, 9, 0.15);
+}
+
+.mt-ranking-row.normal {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2rpx solid rgba(255, 255, 255, 0.08);
+}
+
+.mt-ranking-pos {
+  font-size: 30rpx;
+  font-weight: bold;
+  width: 48rpx;
+  flex-shrink: 0;
+}
+
+.mt-ranking-row.gold .mt-ranking-pos {
+  color: #fbbf24;
+}
+
+.mt-ranking-row.silver .mt-ranking-pos {
+  color: #94a3b8;
+}
+
+.mt-ranking-row.bronze .mt-ranking-pos {
+  color: #d97706;
+}
+
+.mt-ranking-row.normal .mt-ranking-pos {
+  color: #64748b;
+}
+
+.mt-ranking-detail {
+  flex: 1;
+}
+
+.mt-ranking-name {
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: bold;
+  display: block;
+}
+
+.mt-ranking-stats {
+  color: #94a3b8;
+  font-size: 22rpx;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.mt-ranking-total {
+  text-align: right;
+}
+
+.mt-ranking-total-score {
+  font-size: 34rpx;
+  font-weight: bold;
+  display: block;
+}
+
+.mt-ranking-row.gold .mt-ranking-total-score {
+  color: #fbbf24;
+}
+
+.mt-ranking-row.silver .mt-ranking-total-score,
+.mt-ranking-row.bronze .mt-ranking-total-score,
+.mt-ranking-row.normal .mt-ranking-total-score {
+  color: #cbd5e1;
+}
+
+.mt-ranking-total-label {
+  color: #94a3b8;
+  font-size: 22rpx;
+  display: block;
+}
+
+/* 底部操作 */
+.mt-ranking-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 40rpx;
+}
+
+.mt-ranking-action-btn {
+  flex: 1;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+
+.mt-ranking-action-btn.back {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.mt-ranking-action-btn.new {
+  background: #10b981;
+}
+
+.mt-ranking-action-btn-text {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.mt-ranking-action-btn.back .mt-ranking-action-btn-text {
+  color: #cbd5e1;
+}
+
+.mt-ranking-action-btn.new .mt-ranking-action-btn-text {
+  color: #ffffff;
+}

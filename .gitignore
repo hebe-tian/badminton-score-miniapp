@@ -46,3 +46,7 @@ __pycache__/
 venv/
 env/
 .env/
+
+# superpowers
+.superpowers/
+docs/superpowers/

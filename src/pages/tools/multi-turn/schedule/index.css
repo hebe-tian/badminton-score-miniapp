@@ -1,0 +1,470 @@
+.mt-schedule-container {
+  min-height: 100vh;
+  background-color: #0f172a;
+  padding: 32rpx;
+  padding-bottom: 48rpx;
+}
+
+.mt-schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.mt-schedule-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ffffff;
+  display: block;
+}
+
+.mt-schedule-info {
+  font-size: 24rpx;
+  color: #94a3b8;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.mt-schedule-progress-text {
+  text-align: right;
+}
+
+.mt-progress-count {
+  color: #10b981;
+  font-size: 32rpx;
+  font-weight: bold;
+  display: block;
+}
+
+.mt-progress-label {
+  color: #94a3b8;
+  font-size: 22rpx;
+  display: block;
+}
+
+.mt-progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8rpx;
+  height: 8rpx;
+  margin-bottom: 32rpx;
+}
+
+.mt-progress-fill {
+  background: #10b981;
+  border-radius: 8rpx;
+  height: 8rpx;
+  transition: width 0.3s;
+}
+
+/* 轮次卡片 */
+.mt-round-card {
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.mt-round-card.completed {
+  background: rgba(16, 185, 129, 0.08);
+  border: 2rpx solid rgba(16, 185, 129, 0.2);
+}
+
+.mt-round-card.pending {
+  background: rgba(59, 130, 246, 0.08);
+  border: 2rpx solid rgba(59, 130, 246, 0.3);
+}
+
+.mt-round-card.future {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2rpx solid rgba(255, 255, 255, 0.08);
+  opacity: 0.5;
+}
+
+.mt-round-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.mt-round-title {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.mt-round-card.completed .mt-round-title {
+  color: #10b981;
+}
+
+.mt-round-card.pending .mt-round-title {
+  color: #3b82f6;
+}
+
+.mt-round-card.future .mt-round-title {
+  color: #64748b;
+}
+
+.mt-round-status {
+  border-radius: 8rpx;
+  padding: 4rpx 16rpx;
+  font-size: 22rpx;
+}
+
+.mt-round-card.completed .mt-round-status {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.mt-round-card.pending .mt-round-status {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.mt-round-card.future .mt-round-status {
+  background: rgba(255, 255, 255, 0.05);
+  color: #64748b;
+}
+
+/* 对阵信息 */
+.mt-match-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.mt-team-names {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.mt-team-a {
+  text-align: right;
+  color: #3b82f6;
+}
+
+.mt-team-b {
+  text-align: left;
+  color: #f43f5e;
+}
+
+.mt-score-display {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12rpx;
+  padding: 8rpx 24rpx;
+  min-width: 120rpx;
+  text-align: center;
+}
+
+.mt-score-display .score {
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.mt-score-display.placeholder {
+  border: 2rpx dashed rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mt-score-display.placeholder .score {
+  color: #64748b;
+}
+
+.mt-score-display.future-score .score {
+  color: #475569;
+}
+
+.mt-bye-info {
+  text-align: center;
+  margin-top: 10rpx;
+  color: #64748b;
+  font-size: 22rpx;
+}
+
+/* 操作按钮 */
+.mt-match-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.mt-action-btn {
+  flex: 1;
+  border-radius: 16rpx;
+  padding: 16rpx;
+  text-align: center;
+}
+
+.mt-action-btn.input-score {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.mt-action-btn.start-match {
+  background: #3b82f6;
+}
+
+.mt-action-btn-text {
+  font-size: 26rpx;
+}
+
+.mt-action-btn.input-score .mt-action-btn-text {
+  color: #cbd5e1;
+}
+
+.mt-action-btn.start-match .mt-action-btn-text {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+/* 分数输入弹窗 */
+.mt-score-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.mt-score-modal {
+  background: #1e293b;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  width: 80%;
+  max-width: 600rpx;
+}
+
+.mt-score-modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.mt-score-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.mt-score-input-group {
+  text-align: center;
+}
+
+.mt-score-input-label {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.mt-score-input {
+  width: 160rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  border-radius: 12rpx;
+  padding: 16rpx;
+  color: #ffffff;
+  font-size: 36rpx;
+  font-weight: bold;
+  text-align: center;
+}
+
+.mt-score-input-separator {
+  color: #94a3b8;
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.mt-score-modal-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.mt-score-modal-btn {
+  flex: 1;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  text-align: center;
+}
+
+.mt-score-modal-btn.cancel {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mt-score-modal-btn.confirm {
+  background: #10b981;
+}
+
+.mt-score-modal-btn-text {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.mt-score-modal-btn.cancel .mt-score-modal-btn-text {
+  color: #cbd5e1;
+}
+
+.mt-score-modal-btn.confirm .mt-score-modal-btn-text {
+  color: #ffffff;
+}
+
+/* 发球方设置弹窗 */
+.mt-server-section {
+  margin-bottom: 24rpx;
+}
+
+.mt-server-label {
+  color: #94a3b8;
+  font-size: 24rpx;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.mt-server-team-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.mt-server-team-btn {
+  flex: 1;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.15);
+}
+
+.mt-server-team-btn.active.team-a {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+}
+
+.mt-server-team-btn.active.team-b {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: #f43f5e;
+}
+
+.mt-server-team-btn-text {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #cbd5e1;
+}
+
+.mt-server-team-btn.active .mt-server-team-btn-text {
+  color: #ffffff;
+}
+
+.mt-server-player-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.mt-server-player-btn {
+  flex: 1;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2rpx solid rgba(255, 255, 255, 0.15);
+}
+
+.mt-server-player-btn.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+}
+
+.mt-server-player-btn-text {
+  font-size: 26rpx;
+  color: #cbd5e1;
+}
+
+.mt-server-player-btn.active .mt-server-player-btn-text {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+/* 排名预览 */
+.mt-ranking-preview {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-top: 24rpx;
+}
+
+.mt-ranking-preview-title {
+  font-size: 26rpx;
+  color: #94a3b8;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.mt-ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+}
+
+.mt-ranking-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.mt-ranking-pos {
+  font-size: 28rpx;
+  font-weight: bold;
+  width: 40rpx;
+}
+
+.mt-ranking-pos.gold {
+  color: #fbbf24;
+}
+
+.mt-ranking-pos.normal {
+  color: #94a3b8;
+}
+
+.mt-ranking-name {
+  color: #ffffff;
+  font-size: 28rpx;
+}
+
+.mt-ranking-score {
+  color: #10b981;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.mt-ranking-hint {
+  color: #64748b;
+  font-size: 22rpx;
+  text-align: center;
+  margin-top: 12rpx;
+}
+
+/* 查看排名按钮 */
+.mt-view-ranking-btn {
+  background: #10b981;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  text-align: center;
+  margin-top: 24rpx;
+}
+
+.mt-view-ranking-btn-text {
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: bold;
+}
