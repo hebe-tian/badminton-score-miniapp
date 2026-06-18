@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { MultiTurnEvent, MultiTurnMatch } from '../../../../utils/multi-turn-types'
-import { calculatePlayerStats } from '../../../../utils/multi-turn-algorithm'
+import { calculatePlayerStats, generateSchedule } from '../../../../utils/multi-turn-algorithm'
 import { MatchConfig } from '../../../../utils/types'
 import './index.css'
 
@@ -76,6 +76,7 @@ export default function MultiTurnSchedule() {
   const playerMap = new Map(event.players.map(p => [p.id, p]))
   const completedCount = event.matches.filter(m => m.completed).length
   const allCompleted = completedCount === event.matches.length
+  const hasStarted = completedCount > 0
 
   const playerStats = useMemo(() => {
     if (!event) return []
@@ -159,6 +160,13 @@ export default function MultiTurnSchedule() {
     })
   }
 
+  const handleRegenerate = () => {
+    if (hasStarted) return
+    const newMatches = generateSchedule(event.players, event.partnerMode, event.totalRounds)
+    setEvent({ ...event, matches: newMatches })
+    Taro.showToast({ title: '已重新生成', icon: 'success', duration: 1500 })
+  }
+
   const progressPercent = (completedCount / event.matches.length) * 100
 
   return (
@@ -171,9 +179,16 @@ export default function MultiTurnSchedule() {
             {event.players.length}人 · {event.partnerMode === 'random' ? '完全随机' : '严格混双'} · {event.targetScore}分制 · {event.deuce ? '加分' : '不加分'}
           </Text>
         </View>
-        <View className='mt-schedule-progress-text'>
-          <Text className='mt-progress-count'>{completedCount}/{event.matches.length}</Text>
-          <Text className='mt-progress-label'>已完成</Text>
+        <View className='mt-schedule-header-right'>
+          {!hasStarted && (
+            <View className='mt-regenerate-btn' onClick={handleRegenerate}>
+              <Text className='mt-regenerate-btn-text'>重新生成</Text>
+            </View>
+          )}
+          <View className='mt-schedule-progress-text'>
+            <Text className='mt-progress-count'>{completedCount}/{event.matches.length}</Text>
+            <Text className='mt-progress-label'>已完成</Text>
+          </View>
         </View>
       </View>
 

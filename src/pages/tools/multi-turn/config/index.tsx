@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { PartnerMode, MultiTurnPlayer } from '../../../../utils/multi-turn-types'
@@ -26,19 +26,17 @@ export default function MultiTurnConfig() {
     return scoreOption
   }, [scoreOption, customScore])
 
-  const minRounds = useMemo(() => {
-    return calculateMinRounds(playerCount)
-  }, [playerCount])
-
-  // 初始化轮次
-  useMemo(() => {
-    if (totalRounds === 0) {
-      setTotalRounds(minRounds)
-    }
-  }, [minRounds])
-
   const maleCount = players.filter(p => p.gender === 'male').length
   const femaleCount = players.filter(p => p.gender === 'female').length
+
+  const minRounds = useMemo(() => {
+    return calculateMinRounds(playerCount, partnerMode || 'random', maleCount, femaleCount)
+  }, [playerCount, partnerMode, maleCount, femaleCount])
+
+  // 推荐轮次变化时同步更新
+  useEffect(() => {
+    setTotalRounds(minRounds)
+  }, [minRounds])
 
   const isFormValid = useMemo(() => {
     if (!partnerMode) return false
@@ -55,7 +53,9 @@ export default function MultiTurnConfig() {
       players[i] || { name: '', gender: 'male' }
     )
     setPlayers(newPlayers)
-    setTotalRounds(calculateMinRounds(count))
+    const mc = newPlayers.filter(p => p.gender === 'male').length
+    const fc = newPlayers.filter(p => p.gender === 'female').length
+    setTotalRounds(calculateMinRounds(count, partnerMode || 'random', mc, fc))
   }
 
   const handlePlayerNameChange = (index: number, name: string) => {
@@ -117,9 +117,6 @@ export default function MultiTurnConfig() {
             className='mt-mode-card'
             onClick={() => setPartnerMode('random')}
           >
-            <View className='mt-mode-icon'>
-              <Text style={{ fontSize: '56rpx' }}>&#x1F3B2;</Text>
-            </View>
             <Text className='mt-mode-name'>完全随机</Text>
             <Text className='mt-mode-desc'>搭档随机组合{'\n'}不限制性别</Text>
           </View>
@@ -127,9 +124,6 @@ export default function MultiTurnConfig() {
             className='mt-mode-card'
             onClick={() => setPartnerMode('mixed')}
           >
-            <View className='mt-mode-icon'>
-              <Text style={{ fontSize: '56rpx' }}>&#x1F46B;</Text>
-            </View>
             <Text className='mt-mode-name'>严格混双</Text>
             <Text className='mt-mode-desc'>每对搭档一男一女{'\n'}场上双方均为混双</Text>
           </View>
@@ -251,7 +245,7 @@ export default function MultiTurnConfig() {
         <Text className='mt-section-title'>比赛轮次</Text>
         <View className='mt-rounds-display'>
           <Text className='mt-rounds-label'>系统推荐轮次</Text>
-          <Text className='mt-rounds-value'>{totalRounds} 轮</Text>
+          <Text className='mt-rounds-value'>{minRounds} 轮</Text>
         </View>
         {totalRounds < minRounds && (
           <Text className='mt-rounds-warning'>轮次较少，搭档组合可能重复</Text>
