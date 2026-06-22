@@ -10,19 +10,21 @@
 
 ## 🎯 核心功能
 
-### 1. 三种比赛模式
+### 1. 四种比赛模式
 
 | 模式 | 说明 | 特点 |
 |------|------|------|
 | 单打 | 1对1单挑 | 简单直接，支持15/21分制 |
 | 双打 | 2对2对抗 | 完整的发球轮换逻辑，单双数区站位 |
 | 五羽伦比 | 5人接力赛 | 每10分自动换人，支持50/100分制 |
+| 多人转 | 6-8人轮转双打 | 自动编排搭档，保证公平性，个人总分排名 |
 
 ### 2. 智能计分系统
 
 - ✅ 自动处理发球权轮换
 - ✅ 双打模式单双数区站位管理
 - ✅ 五羽伦比换人提示和自动轮换
+- ✅ 多人转自动编排搭档、上场均衡、连续上场限制
 - ✅ 加分规则（需要领先2分获胜）
 - ✅ 完整的得分历史记录
 
@@ -41,18 +43,32 @@
 Home (首页)
   ├─ 选择比赛模式
   └─ 跳转到 Config
-  
+
 Config (配置页)
   ├─ 设置比赛参数
   ├─ 输入球员姓名
   ├─ 选择发球员
   └─ 跳转到 Match
-  
+
 Match (比赛页)
   ├─ 显示比分和球员
   ├─ 计分操作
   ├─ 自动处理轮换
   └─ 比赛结束显示结果
+
+Tools (工具列表)
+  └─ 多人转
+      ├─ Config (配置页)
+      │   ├─ 选择搭档模式（完全随机/严格混双）
+      │   ├─ 录入选手信息和比赛设置
+      │   └─ 生成对阵表
+      ├─ Schedule (对阵表页)
+      │   ├─ 展示轮次对阵
+      │   ├─ 直接输入分数或调用记分器
+      │   └─ 排名预览
+      └─ Ranking (排名页)
+          ├─ 领奖台展示
+          └─ 完整排名列表
 ```
 
 ### 数据流
@@ -100,7 +116,13 @@ MatchHistoryEntry = {
 | `src/pages/match/index.tsx` | 比赛页面主逻辑 | ~500行 |
 | `src/pages/config/index.tsx` | 配置页面逻辑 | ~200行 |
 | `src/pages/home/index.tsx` | 首页逻辑 | ~80行 |
+| `src/pages/tools/index.tsx` | 工具列表页 | ~60行 |
+| `src/pages/tools/multi-turn/config/index.tsx` | 多人转配置页 | ~300行 |
+| `src/pages/tools/multi-turn/schedule/index.tsx` | 多人转对阵表页 | ~370行 |
+| `src/pages/tools/multi-turn/ranking/index.tsx` | 多人转排名页 | ~100行 |
 | `src/utils/types.ts` | 类型定义和工具函数 | ~60行 |
+| `src/utils/multi-turn-types.ts` | 多人转类型定义 | ~40行 |
+| `src/utils/multi-turn-algorithm.ts` | 多人转编排算法 | ~200行 |
 
 ### 样式文件
 
@@ -109,6 +131,9 @@ MatchHistoryEntry = {
 | `src/pages/match/index.css` | 比赛页面样式 | ~570行 |
 | `src/pages/config/index.css` | 配置页面样式 | ~180行 |
 | `src/pages/home/index.css` | 首页样式 | ~90行 |
+| `src/pages/tools/multi-turn/config/index.css` | 多人转配置页样式 | ~300行 |
+| `src/pages/tools/multi-turn/schedule/index.css` | 多人转对阵表页样式 | ~400行 |
+| `src/pages/tools/multi-turn/ranking/index.css` | 多人转排名页样式 | ~200行 |
 | `src/app.css` | 全局样式 | ~30行 |
 
 ### 配置文件
@@ -220,11 +245,10 @@ A队（上方）                    B队（下方）
 - ✅ 得分明细展示
 - ✅ 跨端支持（微信小程序 + H5）
 
-## 💡 未来规划
+### v1.1.0 (2026-06-15)
 
-- [ ] 添加更多比赛模式（如混合双打）
-- [ ] 支持自定义规则
-- [ ] 添加比赛统计和分析
-- [ ] 支持多语言
-- [ ] 云端同步比赛记录
-- [ ] 添加音效和震动反馈
+- ✅ 新增"多人转"工具：6-8人轮转双打
+- ✅ 支持完全随机和严格混双两种搭档模式
+- ✅ 自动编排搭档，保证上场均衡和搭档去重
+- ✅ 对阵表页支持直接输入分数和调用记分器
+- ✅ 排名页展示领奖台和完整排名

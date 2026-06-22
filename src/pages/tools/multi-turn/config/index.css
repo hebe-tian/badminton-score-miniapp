@@ -2,7 +2,7 @@
   min-height: 100vh;
   background-color: #0f172a;
   padding: 48rpx;
-  padding-bottom: 180rpx;
+  padding-bottom: 200rpx;
 }
 
 .mt-config-header {
@@ -70,7 +70,6 @@
 }
 
 .mt-mode-icon {
-  font-size: 56rpx;
   margin-bottom: 12rpx;
 }
 
@@ -286,7 +285,7 @@
   display: flex;
   align-items: center;
   gap: 20rpx;
-  margin-top: 16rpx;
+  margin-top: 20rpx;
 }
 
 .mt-rounds-btn {
