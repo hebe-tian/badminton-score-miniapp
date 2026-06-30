@@ -48,7 +48,7 @@ export function calculateMinRounds(
   maleCount: number = 0,
   femaleCount: number = 0
 ): number {
-  if (playerCount < 4) return 1;
+  if (playerCount <= 4) return 1;
 
   let baseRounds: number;
   if (partnerMode === 'mixed' && maleCount > 0 && femaleCount > 0) {
@@ -132,8 +132,7 @@ function generateSingleSchedule(
   possibleMatches = shuffleArray(possibleMatches);
 
   for (let round = 1; round <= totalRounds; round++) {
-    const initialMaxConsecutive = playerIds.length === 4 ? Infinity : 2;
-    const matchResult = selectBestMatch(possibleMatches, state, playerIds, partnerMode, initialMaxConsecutive);
+    const matchResult = selectBestMatch(possibleMatches, state, playerIds, partnerMode);
     if (matchResult) {
       matches.push({
         round,
