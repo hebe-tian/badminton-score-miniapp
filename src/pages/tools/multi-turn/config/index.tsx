@@ -108,7 +108,7 @@ export default function MultiTurnConfig() {
         </View>
 
         <View className='mt-tip-bar'>
-          <Text className='mt-tip-text'>建议 6-8 人参与，获得最佳体验</Text>
+          <Text className='mt-tip-text'>建议 4-8 人参与，获得最佳体验</Text>
         </View>
 
         <Text className='mt-section-title'>选择搭档模式</Text>
@@ -136,15 +136,19 @@ export default function MultiTurnConfig() {
   return (
     <View className='mt-config-container'>
       <View className='mt-config-header'>
-        <Text className='mt-config-title'>多人转</Text>
+        <View className='mt-config-title-row'>
+          <Text className='mt-config-title'>多人转</Text>
+          <View
+            className={`mt-mode-tag ${partnerMode}`}
+            onClick={() => setPartnerMode(null)}
+          >
+            <Text className='mt-mode-tag-text'>
+              {partnerMode === 'random' ? '完全随机' : '严格混双'}
+            </Text>
+            <Text className='mt-mode-tag-hint'>点击切换</Text>
+          </View>
+        </View>
         <Text className='mt-config-subtitle'>N位选手独立参赛，自动编排搭档双打</Text>
-      </View>
-
-      {/* 模式标签 */}
-      <View className={`mt-mode-tag ${partnerMode}`}>
-        <Text className='mt-mode-tag-text'>
-          {partnerMode === 'random' ? '完全随机' : '严格混双'}
-        </Text>
       </View>
 
       {/* 比赛分数 */}
@@ -197,7 +201,7 @@ export default function MultiTurnConfig() {
 
         {/* 人数选择 */}
         <View style={{ display: 'flex', gap: '12rpx', marginBottom: '20rpx' }}>
-          {[6, 7, 8].map(count => (
+          {[4, 5, 6, 7, 8].map(count => (
             <View
               key={count}
               className={`mt-score-option ${playerCount === count ? 'active' : ''}`}
