@@ -33,3 +33,10 @@ export interface PlayerStats {
   appearances: number;
   wins: number;
 }
+
+export interface GenerateScheduleResult {
+  matches: MultiTurnMatch[];
+  adjustedRounds: number;
+  isAdjusted: boolean;
+  isOptimal: boolean;
+}

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { View, Text, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { PartnerMode, MultiTurnPlayer } from '../../../../utils/multi-turn-types'
@@ -33,30 +33,46 @@ export default function MultiTurnConfig() {
     return calculateMinRounds(playerCount, partnerMode || 'random', maleCount, femaleCount)
   }, [playerCount, partnerMode, maleCount, femaleCount])
 
-  // 推荐轮次变化时同步更新
-  useEffect(() => {
-    setTotalRounds(minRounds)
-  }, [minRounds])
+  // 用 minRounds 作为 totalRounds 的实际值（直接计算，无需单独 state 同步）
+  const effectiveTotalRounds = totalRounds > 0 ? totalRounds : minRounds
+
+  const handlePlayerCountChange = (count: number) => {
+    const newPlayers = Array.from({ length: count }, (_, i) =>
+      players[i] || { name: '', gender: 'male' }
+    )
+    const newMaleCount = newPlayers.filter(p => p.gender === 'male').length
+    const newFemaleCount = newPlayers.filter(p => p.gender === 'female').length
+    const newMinRounds = calculateMinRounds(count, partnerMode || 'random', newMaleCount, newFemaleCount)
+    const hasPlayerInfo = newPlayers.some(p => p.name.trim())
+    const currentTotalRounds = totalRounds || minRounds
+
+    setPlayerCount(count)
+    setPlayers(newPlayers)
+    setTotalRounds(newMinRounds)
+
+    if (hasPlayerInfo && currentTotalRounds !== newMinRounds) {
+      // 使用 nextTick 确保在其他 state 更新完成后再弹窗
+      setTimeout(() => {
+        Taro.showModal({
+          title: '轮次已调整',
+          content: `为保证每人上场次数一致，轮次已从 ${currentTotalRounds} 轮调整为 ${newMinRounds} 轮`,
+          showCancel: false,
+          confirmText: '知道了',
+        })
+      }, 0)
+    } else {
+      // 无选手信息或轮次未变，不提示
+    }
+  }
 
   const isFormValid = useMemo(() => {
     if (!partnerMode) return false
     if (targetScore <= 0) return false
     if (players.some(p => !p.name.trim())) return false
     if (partnerMode === 'mixed' && (maleCount < 2 || femaleCount < 2)) return false
-    if (totalRounds < 1) return false
+    if (effectiveTotalRounds < 1) return false
     return true
-  }, [partnerMode, targetScore, players, maleCount, femaleCount, totalRounds, minRounds])
-
-  const handlePlayerCountChange = (count: number) => {
-    setPlayerCount(count)
-    const newPlayers = Array.from({ length: count }, (_, i) =>
-      players[i] || { name: '', gender: 'male' }
-    )
-    setPlayers(newPlayers)
-    const mc = newPlayers.filter(p => p.gender === 'male').length
-    const fc = newPlayers.filter(p => p.gender === 'female').length
-    setTotalRounds(calculateMinRounds(count, partnerMode || 'random', mc, fc))
-  }
+  }, [partnerMode, targetScore, players, maleCount, femaleCount, effectiveTotalRounds, minRounds])
 
   const handlePlayerNameChange = (index: number, name: string) => {
     const newPlayers = [...players]
@@ -82,15 +98,15 @@ export default function MultiTurnConfig() {
       ...(partnerMode === 'mixed' ? { gender: p.gender } : {}),
     }))
 
-    const matches = generateSchedule(multiTurnPlayers, partnerMode, totalRounds)
+    const result = generateSchedule(multiTurnPlayers, partnerMode, effectiveTotalRounds)
 
     const event = {
       players: multiTurnPlayers,
       partnerMode,
       targetScore,
       deuce,
-      matches,
-      totalRounds,
+      matches: result.matches,
+      totalRounds: result.adjustedRounds,
     }
 
     Taro.navigateTo({
@@ -251,21 +267,21 @@ export default function MultiTurnConfig() {
           <Text className='mt-rounds-label'>系统推荐轮次</Text>
           <Text className='mt-rounds-value'>{minRounds} 轮</Text>
         </View>
-        {totalRounds < minRounds && (
+        {effectiveTotalRounds < minRounds && (
           <Text className='mt-rounds-warning'>轮次较少，搭档组合可能重复</Text>
         )}
         <Text className='mt-rounds-hint'>可减少或追加轮次</Text>
         <View className='mt-rounds-adjust'>
           <View
             className='mt-rounds-btn'
-            onClick={() => setTotalRounds(Math.max(1, totalRounds - 1))}
+            onClick={() => setTotalRounds(Math.max(1, effectiveTotalRounds - 1))}
           >
             <Text>-</Text>
           </View>
-          <Text className='mt-rounds-current'>{totalRounds}</Text>
+          <Text className='mt-rounds-current'>{effectiveTotalRounds}</Text>
           <View
             className='mt-rounds-btn'
-            onClick={() => setTotalRounds(totalRounds + 1)}
+            onClick={() => setTotalRounds(Math.min(14, effectiveTotalRounds + 1))}
           >
             <Text>+</Text>
           </View>

@@ -287,6 +287,13 @@
   margin-top: 8rpx;
 }
 
+.mt-rounds-auto-hint {
+  color: #3b82f6;
+  font-size: 24rpx;
+  margin-top: 8rpx;
+  display: block;
+}
+
 .mt-rounds-adjust {
   display: flex;
   align-items: center;
