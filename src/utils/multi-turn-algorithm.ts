@@ -1,4 +1,4 @@
-import { MultiTurnPlayer, MultiTurnMatch, PartnerMode, PlayerStats } from './multi-turn-types';
+import { MultiTurnPlayer, MultiTurnMatch, PartnerMode, PlayerStats, GenerateScheduleResult } from './multi-turn-types';
 
 function makePairKey(a: number, b: number): string {
   return a < b ? `${a}-${b}` : `${b}-${a}`;
@@ -19,15 +19,21 @@ function shuffleArray<T>(arr: T[]): T[] {
   return result;
 }
 
+class TimeoutError extends Error {
+  constructor() { super('Search timeout'); }
+}
+
+const MAX_ROUNDS = 14;
+const SEARCH_TIMEOUT_MS = 2000;
+
 interface ScheduleState {
-  partnerCount: Map<string, number>;   // 搭档次数
-  opponentCount: Map<string, number>;  // 对决组合次数
-  appearanceCount: Map<number, number>; // 上场次数
-  consecutiveOnCourt: Map<number, number>; // 连续上场次数
-  lastOnCourt: Set<number>; // 上一轮上场选手
-  opponentPairCount: Map<string, number>;  // 每对选手对战次数（如 "1-3": 2）
-  lastOpponents: Map<number, Set<number>>;  // 每人上轮的对手集合
-  restRounds: Map<number, number[]>;       // 每人休息的轮次索引
+  partnerCount: Map<string, number>;
+  opponentCount: Map<string, number>;
+  appearanceCount: Map<number, number>;
+  consecutiveOnCourt: Map<number, number>;
+  lastOnCourt: Set<number>;
+  opponentPairCount: Map<string, number>;
+  lastOpponents: Map<number, Set<number>>;
 }
 
 interface PossibleMatch {
@@ -36,19 +42,153 @@ interface PossibleMatch {
   players: number[];
 }
 
+interface SearchState extends ScheduleState {
+  targetAppearance: number;
+  matches: MultiTurnMatch[];
+}
+
+function createInitialState(playerIds: number[], targetAppearance: number): SearchState {
+  const state: SearchState = {
+    partnerCount: new Map(),
+    opponentCount: new Map(),
+    appearanceCount: new Map(),
+    consecutiveOnCourt: new Map(),
+    lastOnCourt: new Set(),
+    opponentPairCount: new Map(),
+    lastOpponents: new Map(),
+    targetAppearance,
+    matches: [],
+  };
+  for (const id of playerIds) {
+    state.appearanceCount.set(id, 0);
+    state.consecutiveOnCourt.set(id, 0);
+    state.lastOpponents.set(id, new Set());
+  }
+  return state;
+}
+
+function applyMatch(state: SearchState, match: PossibleMatch, round: number, playerIds: number[]): void {
+  state.matches.push({
+    round,
+    teamA: match.teamA,
+    teamB: match.teamB,
+    scoreA: null,
+    scoreB: null,
+    completed: false,
+  });
+
+  const onCourt = new Set(match.players);
+  for (const id of playerIds) {
+    if (onCourt.has(id)) {
+      state.appearanceCount.set(id, (state.appearanceCount.get(id) || 0) + 1);
+      state.consecutiveOnCourt.set(id, (state.consecutiveOnCourt.get(id) || 0) + 1);
+    } else {
+      state.consecutiveOnCourt.set(id, 0);
+    }
+  }
+
+  const keyA = makePairKey(match.teamA[0], match.teamA[1]);
+  const keyB = makePairKey(match.teamB[0], match.teamB[1]);
+  state.partnerCount.set(keyA, (state.partnerCount.get(keyA) || 0) + 1);
+  state.partnerCount.set(keyB, (state.partnerCount.get(keyB) || 0) + 1);
+
+  const matchKey = makeMatchKey(match.teamA, match.teamB);
+  state.opponentCount.set(matchKey, (state.opponentCount.get(matchKey) || 0) + 1);
+
+  const [a1, a2] = match.teamA;
+  const [b1, b2] = match.teamB;
+  const oppPairs = [
+    makePairKey(a1, b1), makePairKey(a1, b2),
+    makePairKey(a2, b1), makePairKey(a2, b2),
+  ];
+  for (const pairKey of oppPairs) {
+    state.opponentPairCount.set(pairKey, (state.opponentPairCount.get(pairKey) || 0) + 1);
+  }
+
+  const newLastOpponents = new Map<number, Set<number>>();
+  newLastOpponents.set(a1, new Set([b1, b2]));
+  newLastOpponents.set(a2, new Set([b1, b2]));
+  newLastOpponents.set(b1, new Set([a1, a2]));
+  newLastOpponents.set(b2, new Set([a1, a2]));
+  for (const id of playerIds) {
+    if (!newLastOpponents.has(id)) {
+      newLastOpponents.set(id, new Set());
+    }
+  }
+  state.lastOpponents = newLastOpponents;
+  state.lastOnCourt = onCourt;
+}
+
+function undoMatch(state: SearchState, match: PossibleMatch, _round: number, playerIds: number[]): void {
+  state.matches.pop();
+
+  const onCourt = new Set(match.players);
+  for (const id of playerIds) {
+    if (onCourt.has(id)) {
+      state.appearanceCount.set(id, (state.appearanceCount.get(id) || 0) - 1);
+      const prev = state.consecutiveOnCourt.get(id) || 0;
+      state.consecutiveOnCourt.set(id, Math.max(0, prev - 1));
+    } else {
+      state.consecutiveOnCourt.set(id, 0);
+    }
+  }
+
+  const keyA = makePairKey(match.teamA[0], match.teamA[1]);
+  const keyB = makePairKey(match.teamB[0], match.teamB[1]);
+  state.partnerCount.set(keyA, Math.max(0, (state.partnerCount.get(keyA) || 0) - 1));
+  state.partnerCount.set(keyB, Math.max(0, (state.partnerCount.get(keyB) || 0) - 1));
+  if (state.partnerCount.get(keyA) === 0) state.partnerCount.delete(keyA);
+  if (state.partnerCount.get(keyB) === 0) state.partnerCount.delete(keyB);
+
+  const matchKey = makeMatchKey(match.teamA, match.teamB);
+  state.opponentCount.set(matchKey, Math.max(0, (state.opponentCount.get(matchKey) || 0) - 1));
+  if (state.opponentCount.get(matchKey) === 0) state.opponentCount.delete(matchKey);
+
+  const [a1, a2] = match.teamA;
+  const [b1, b2] = match.teamB;
+  const oppPairs = [
+    makePairKey(a1, b1), makePairKey(a1, b2),
+    makePairKey(a2, b1), makePairKey(a2, b2),
+  ];
+  for (const pairKey of oppPairs) {
+    state.opponentPairCount.set(pairKey, Math.max(0, (state.opponentPairCount.get(pairKey) || 0) - 1));
+    if (state.opponentPairCount.get(pairKey) === 0) state.opponentPairCount.delete(pairKey);
+  }
+
+  if (state.matches.length > 0) {
+    const prevMatch = state.matches[state.matches.length - 1];
+    const prevOnCourt = new Set([...prevMatch.teamA, ...prevMatch.teamB]);
+    state.lastOnCourt = prevOnCourt;
+    const pa1 = prevMatch.teamA[0], pa2 = prevMatch.teamA[1];
+    const pb1 = prevMatch.teamB[0], pb2 = prevMatch.teamB[1];
+    const restored = new Map<number, Set<number>>();
+    restored.set(pa1, new Set([pb1, pb2]));
+    restored.set(pa2, new Set([pb1, pb2]));
+    restored.set(pb1, new Set([pa1, pa2]));
+    restored.set(pb2, new Set([pa1, pa2]));
+    for (const id of playerIds) {
+      if (!restored.has(id)) restored.set(id, new Set());
+    }
+    state.lastOpponents = restored;
+  } else {
+    state.lastOnCourt = new Set();
+    for (const id of playerIds) {
+      state.lastOpponents.set(id, new Set());
+    }
+  }
+}
+
 /**
- * 计算最少轮次
- * 保证每人上场次数相等：
- * - 完全随机：4 * R 能被 N 整除
- * - 严格混双：2 * R 能被 M 和 F 整除
+ * 计算调整后轮次
+ * 保证每人上场次数严格相等，向上取整到可整除值
  */
-export function calculateMinRounds(
+export function calculateAdjustedRounds(
   playerCount: number,
   partnerMode: PartnerMode = 'random',
   maleCount: number = 0,
   femaleCount: number = 0
-): number {
-  if (playerCount < 4) return 1;
+): { adjustedRounds: number; isAdjusted: boolean } {
+  if (playerCount < 4) return { adjustedRounds: 1, isAdjusted: false };
 
   let baseRounds: number;
   if (partnerMode === 'mixed' && maleCount > 0 && femaleCount > 0) {
@@ -57,83 +197,186 @@ export function calculateMinRounds(
     baseRounds = Math.ceil((playerCount * (playerCount - 1)) / 4);
   }
 
-  // 递增轮次直到满足每人上场次数相等的整除条件
-  let rounds = baseRounds;
+  let adjusted = baseRounds;
   while (true) {
     if (partnerMode === 'mixed' && maleCount > 0 && femaleCount > 0) {
-      if ((2 * rounds) % maleCount === 0 && (2 * rounds) % femaleCount === 0) break;
+      if ((2 * adjusted) % maleCount === 0 && (2 * adjusted) % femaleCount === 0) break;
     } else {
-      if ((4 * rounds) % playerCount === 0) break;
+      if ((4 * adjusted) % playerCount === 0) break;
     }
-    rounds++;
+    adjusted++;
+    if (adjusted > MAX_ROUNDS) break;
   }
 
-  return rounds;
+  const finalRounds = Math.min(adjusted, MAX_ROUNDS);
+  return {
+    adjustedRounds: finalRounds,
+    isAdjusted: finalRounds !== baseRounds || baseRounds > MAX_ROUNDS,
+  };
+}
+
+/**
+ * 兼容旧接口：计算最少轮次
+ */
+export function calculateMinRounds(
+  playerCount: number,
+  partnerMode: PartnerMode = 'random',
+  maleCount: number = 0,
+  femaleCount: number = 0
+): number {
+  return calculateAdjustedRounds(playerCount, partnerMode, maleCount, femaleCount).adjustedRounds;
 }
 
 /**
  * 生成对阵表
- * 多次生成取最优：生成 5 次，保留质量最优的对阵表
+ * 主入口：回溯搜索 + 超时降级贪心
  */
 export function generateSchedule(
   players: MultiTurnPlayer[],
   partnerMode: PartnerMode,
   totalRounds: number
-): MultiTurnMatch[] {
-  const GENERATION_COUNT = 5;
-  let bestSchedule: MultiTurnMatch[] | null = null;
-  let bestScore = Infinity;
+): GenerateScheduleResult {
+  const playerIds = players.map(p => p.id);
+  const playerMap = new Map(players.map(p => [p.id, p]));
+  const playerCount = playerIds.length;
 
-  for (let i = 0; i < GENERATION_COUNT; i++) {
-    const schedule = generateSingleSchedule(players, partnerMode, totalRounds);
-    const qualityScore = evaluateScheduleQuality(schedule, players);
+  const { adjustedRounds, isAdjusted } = calculateAdjustedRounds(
+    playerCount, partnerMode,
+    playerIds.filter(id => playerMap.get(id)?.gender === 'male').length,
+    playerIds.filter(id => playerMap.get(id)?.gender === 'female').length
+  );
 
-    if (qualityScore < bestScore) {
-      bestScore = qualityScore;
-      bestSchedule = schedule;
-    }
+  const effectiveRounds = isAdjusted ? adjustedRounds : totalRounds;
+  const clampedRounds = Math.min(effectiveRounds, MAX_ROUNDS);
+  const targetAppearance = (4 * clampedRounds) / playerCount;
+
+  const possibleMatches = generatePossibleMatches(players, partnerMode, playerMap);
+  const deadline = Date.now() + SEARCH_TIMEOUT_MS;
+
+  const searchResult = dfsSearch(
+    possibleMatches, playerIds, playerCount,
+    clampedRounds, targetAppearance, deadline
+  );
+
+  const wasAdjusted = isAdjusted || clampedRounds !== totalRounds;
+
+  if (searchResult) {
+    return {
+      matches: searchResult,
+      adjustedRounds: clampedRounds,
+      isAdjusted: wasAdjusted,
+      isOptimal: true,
+    };
   }
 
-  return bestSchedule!;
+  const fallbackSchedule = generateGreedySchedule(
+    players, partnerMode, clampedRounds, playerIds, playerMap
+  );
+
+  return {
+    matches: fallbackSchedule,
+    adjustedRounds: clampedRounds,
+    isAdjusted: wasAdjusted,
+    isOptimal: false,
+  };
 }
 
 /**
- * 单次生成对阵表
- * 使用全局贪心：每轮从所有合法对局中选代价最小者
+ * 回溯搜索
+ * DFS + 三层剪枝，找到第一个满足硬约束的完整解
  */
-function generateSingleSchedule(
+function dfsSearch(
+  possibleMatches: PossibleMatch[],
+  playerIds: number[],
+  playerCount: number,
+  totalRounds: number,
+  targetAppearance: number,
+  deadline: number
+): MultiTurnMatch[] | null {
+  const state = createInitialState(playerIds, targetAppearance);
+  const maxConsecutive = playerCount > 5 ? 2 : Infinity;
+
+  const sortedMatches = [...possibleMatches].sort((a, b) =>
+    evaluateMatchCost(a, state, playerIds) - evaluateMatchCost(b, state, playerIds)
+  );
+
+  try {
+    return dfs(1, state, sortedMatches, playerIds, playerCount,
+      totalRounds, targetAppearance, maxConsecutive, deadline);
+  } catch (e) {
+    if (e instanceof TimeoutError) return null;
+    throw e;
+  }
+}
+
+function dfs(
+  round: number,
+  state: SearchState,
+  allMatches: PossibleMatch[],
+  playerIds: number[],
+  playerCount: number,
+  totalRounds: number,
+  targetAppearance: number,
+  maxConsecutive: number,
+  deadline: number
+): MultiTurnMatch[] | null {
+  if (Date.now() > deadline) throw new TimeoutError();
+
+  if (round > totalRounds) return state.matches;
+
+  // 可行性剪枝：剩余轮次能否补齐待上场人次
+  const remainingSlots = (totalRounds - round + 1) * 4;
+  const neededSlots = playerIds.reduce(
+    (sum, id) => sum + Math.max(0, targetAppearance - (state.appearanceCount.get(id) || 0)), 0
+  );
+  if (remainingSlots < neededSlots) return null;
+
+  // 只允许当前上场次数最少的选手上场（保证严格相等）
+  const minApp = Math.min(...playerIds.map(id => state.appearanceCount.get(id) || 0));
+
+  for (const match of allMatches) {
+    // 硬约束过滤：连续上场超限
+    if (match.players.some(id => (state.consecutiveOnCourt.get(id) || 0) >= maxConsecutive)) continue;
+    // 硬约束过滤：上场次数已达目标
+    if (match.players.some(id => (state.appearanceCount.get(id) || 0) >= targetAppearance)) continue;
+    // 硬约束过滤：上场次数超过当前最小值
+    if (match.players.some(id => (state.appearanceCount.get(id) || 0) > minApp)) continue;
+    // 硬约束过滤：对局组合已出现过（AB vs CD 不重复）
+    const matchKey = makeMatchKey(match.teamA, match.teamB);
+    if ((state.opponentCount.get(matchKey) || 0) > 0) continue;
+
+    applyMatch(state, match, round, playerIds);
+    const result = dfs(round + 1, state, allMatches, playerIds, playerCount,
+      totalRounds, targetAppearance, maxConsecutive, deadline);
+    if (result) return result;
+    undoMatch(state, match, round, playerIds);
+  }
+
+  return null;
+}
+
+/**
+ * 贪心降级算法
+ * 超时或回溯无解时使用
+ */
+function generateGreedySchedule(
   players: MultiTurnPlayer[],
   partnerMode: PartnerMode,
-  totalRounds: number
+  totalRounds: number,
+  playerIds: number[],
+  playerMap: Map<number, MultiTurnPlayer>
 ): MultiTurnMatch[] {
   const matches: MultiTurnMatch[] = [];
-  const playerIds = players.map(p => p.id);
-  const playerMap = new Map(players.map(p => [p.id, p]));
-
-  const state: ScheduleState = {
-    partnerCount: new Map(),
-    opponentCount: new Map(),
-    appearanceCount: new Map(),
-    consecutiveOnCourt: new Map(),
-    lastOnCourt: new Set(),
-    opponentPairCount: new Map(),
-    lastOpponents: new Map(),
-    restRounds: new Map(),
-  };
-
-  for (const id of playerIds) {
-    state.appearanceCount.set(id, 0);
-    state.consecutiveOnCourt.set(id, 0);
-    state.lastOpponents.set(id, new Set());
-    state.restRounds.set(id, []);
-  }
+  const state = createInitialState(playerIds, (4 * totalRounds) / playerIds.length);
+  const maxConsecutive = playerIds.length > 5 ? 2 : Infinity;
 
   let possibleMatches = generatePossibleMatches(players, partnerMode, playerMap);
   possibleMatches = shuffleArray(possibleMatches);
 
   for (let round = 1; round <= totalRounds; round++) {
-    const initialMaxConsecutive = playerIds.length === 4 ? Infinity : 2;
-    const matchResult = selectBestMatch(possibleMatches, state, playerIds, partnerMode, initialMaxConsecutive);
+    const matchResult = selectBestMatch(
+      possibleMatches, state, playerIds, partnerMode, maxConsecutive, 0
+    );
     if (matchResult) {
       matches.push({
         round,
@@ -143,56 +386,57 @@ function generateSingleSchedule(
         scoreB: null,
         completed: false,
       });
-
-      const onCourt = new Set(matchResult.players);
-      for (const id of playerIds) {
-        if (onCourt.has(id)) {
-          state.appearanceCount.set(id, (state.appearanceCount.get(id) || 0) + 1);
-          state.consecutiveOnCourt.set(id, (state.consecutiveOnCourt.get(id) || 0) + 1);
-        } else {
-          state.consecutiveOnCourt.set(id, 0);
-          // 记录休息的轮次
-          state.restRounds.get(id)!.push(round);
-        }
-      }
-
-      const keyA = makePairKey(matchResult.teamA[0], matchResult.teamA[1]);
-      const keyB = makePairKey(matchResult.teamB[0], matchResult.teamB[1]);
-      state.partnerCount.set(keyA, (state.partnerCount.get(keyA) || 0) + 1);
-      state.partnerCount.set(keyB, (state.partnerCount.get(keyB) || 0) + 1);
-
-      const matchKey = makeMatchKey(matchResult.teamA, matchResult.teamB);
-      state.opponentCount.set(matchKey, (state.opponentCount.get(matchKey) || 0) + 1);
-
-      // 更新每对选手的对战次数
-      const [a1, a2] = matchResult.teamA;
-      const [b1, b2] = matchResult.teamB;
-      const oppPairs = [
-        makePairKey(a1, b1), makePairKey(a1, b2),
-        makePairKey(a2, b1), makePairKey(a2, b2),
-      ];
-      for (const pairKey of oppPairs) {
-        state.opponentPairCount.set(pairKey, (state.opponentPairCount.get(pairKey) || 0) + 1);
-      }
-
-      // 更新每人上轮的对手集合
-      const newLastOpponents = new Map<number, Set<number>>();
-      newLastOpponents.set(a1, new Set([b1, b2]));
-      newLastOpponents.set(a2, new Set([b1, b2]));
-      newLastOpponents.set(b1, new Set([a1, a2]));
-      newLastOpponents.set(b2, new Set([a1, a2]));
-      for (const id of playerIds) {
-        if (!newLastOpponents.has(id)) {
-          newLastOpponents.set(id, new Set());
-        }
-      }
-      state.lastOpponents = newLastOpponents;
-
-      state.lastOnCourt = onCourt;
+      applyMatchSimple(state, matchResult, round, playerIds);
     }
   }
 
   return matches;
+}
+
+function applyMatchSimple(
+  state: SearchState,
+  match: PossibleMatch,
+  _round: number,
+  playerIds: number[]
+): void {
+  const onCourt = new Set(match.players);
+  for (const id of playerIds) {
+    if (onCourt.has(id)) {
+      state.appearanceCount.set(id, (state.appearanceCount.get(id) || 0) + 1);
+      state.consecutiveOnCourt.set(id, (state.consecutiveOnCourt.get(id) || 0) + 1);
+    } else {
+      state.consecutiveOnCourt.set(id, 0);
+    }
+  }
+
+  const keyA = makePairKey(match.teamA[0], match.teamA[1]);
+  const keyB = makePairKey(match.teamB[0], match.teamB[1]);
+  state.partnerCount.set(keyA, (state.partnerCount.get(keyA) || 0) + 1);
+  state.partnerCount.set(keyB, (state.partnerCount.get(keyB) || 0) + 1);
+
+  const matchKey = makeMatchKey(match.teamA, match.teamB);
+  state.opponentCount.set(matchKey, (state.opponentCount.get(matchKey) || 0) + 1);
+
+  const [a1, a2] = match.teamA;
+  const [b1, b2] = match.teamB;
+  const oppPairs = [
+    makePairKey(a1, b1), makePairKey(a1, b2),
+    makePairKey(a2, b1), makePairKey(a2, b2),
+  ];
+  for (const pairKey of oppPairs) {
+    state.opponentPairCount.set(pairKey, (state.opponentPairCount.get(pairKey) || 0) + 1);
+  }
+
+  const newLastOpponents = new Map<number, Set<number>>();
+  newLastOpponents.set(a1, new Set([b1, b2]));
+  newLastOpponents.set(a2, new Set([b1, b2]));
+  newLastOpponents.set(b1, new Set([a1, a2]));
+  newLastOpponents.set(b2, new Set([a1, a2]));
+  for (const id of playerIds) {
+    if (!newLastOpponents.has(id)) newLastOpponents.set(id, new Set());
+  }
+  state.lastOpponents = newLastOpponents;
+  state.lastOnCourt = onCourt;
 }
 
 /**
@@ -216,7 +460,6 @@ function generatePossibleMatches(
           for (let y = x + 1; y < females.length; y++) {
             const m1 = males[i], m2 = males[j];
             const f1 = females[x], f2 = females[y];
-            // 两种混双分队方式
             matches.push({ teamA: [m1, f1], teamB: [m2, f2], players: [m1, f1, m2, f2] });
             matches.push({ teamA: [m1, f2], teamB: [m2, f1], players: [m1, f2, m2, f1] });
           }
@@ -224,14 +467,12 @@ function generatePossibleMatches(
       }
     }
   } else {
-    // 完全随机：枚举所有 4 人子集和分队方式
     for (let a = 0; a < playerIds.length; a++) {
       for (let b = a + 1; b < playerIds.length; b++) {
         for (let c = b + 1; c < playerIds.length; c++) {
           for (let d = c + 1; d < playerIds.length; d++) {
             const p1 = playerIds[a], p2 = playerIds[b];
             const p3 = playerIds[c], p4 = playerIds[d];
-            // 3 种分队方式
             matches.push({ teamA: [p1, p2], teamB: [p3, p4], players: [p1, p2, p3, p4] });
             matches.push({ teamA: [p1, p3], teamB: [p2, p4], players: [p1, p3, p2, p4] });
             matches.push({ teamA: [p1, p4], teamB: [p2, p3], players: [p1, p4, p2, p3] });
@@ -244,14 +485,9 @@ function generatePossibleMatches(
   return matches;
 }
 
-/**
- * 选择当前最优对局
- * maxConsecutive: 连续上场限制
- * maxAppearanceGap: 允许的上场次数差距（0 = 严格相等）
- */
 function selectBestMatch(
   possibleMatches: PossibleMatch[],
-  state: ScheduleState,
+  state: SearchState,
   playerIds: number[],
   partnerMode: PartnerMode,
   maxConsecutive: number = 2,
@@ -259,21 +495,18 @@ function selectBestMatch(
 ): PossibleMatch | null {
   let bestScore = Infinity;
   const candidates: PossibleMatch[] = [];
-
-  // 当前最小上场次数
   const minAppearance = Math.min(...playerIds.map(id => state.appearanceCount.get(id) || 0));
 
   for (const match of possibleMatches) {
-    // 过滤连续上场超限
     const exceedsConsecutive = match.players.some(id => (state.consecutiveOnCourt.get(id) || 0) >= maxConsecutive);
     if (exceedsConsecutive) continue;
-
-    // 过滤上场次数超限：所有选手的上场次数不能超过最小值 + maxAppearanceGap
     const exceedsAppearance = match.players.some(id => (state.appearanceCount.get(id) || 0) > minAppearance + maxAppearanceGap);
     if (exceedsAppearance) continue;
+    // 硬约束：对局组合不重复
+    const matchKey = makeMatchKey(match.teamA, match.teamB);
+    if ((state.opponentCount.get(matchKey) || 0) > 0) continue;
 
-    const score = evaluateMatch(match, state, playerIds);
-
+    const score = evaluateMatchCost(match, state, playerIds);
     if (score < bestScore) {
       bestScore = score;
       candidates.length = 0;
@@ -286,28 +519,19 @@ function selectBestMatch(
   if (candidates.length > 0) {
     return candidates[Math.floor(Math.random() * candidates.length)];
   }
-
-  // 降级1：放宽连续上场限制（保持上场次数均衡）
   if (maxConsecutive < 3) {
     return selectBestMatch(possibleMatches, state, playerIds, partnerMode, maxConsecutive + 1, maxAppearanceGap);
   }
-
-  // 降级2：放宽上场次数限制
   if (maxAppearanceGap < playerIds.length) {
     return selectBestMatch(possibleMatches, state, playerIds, partnerMode, maxConsecutive, maxAppearanceGap + 1);
   }
-
-  // 仍无解，随机返回一个候选
   return possibleMatches[Math.floor(Math.random() * possibleMatches.length)] || null;
 }
 
-/**
- * 评估对局代价
- */
-function evaluateMatch(
+function evaluateMatchCost(
   match: PossibleMatch,
   state: ScheduleState,
-  playerIds: number[]
+  _playerIds: number[]
 ): number {
   const keyA = makePairKey(match.teamA[0], match.teamA[1]);
   const keyB = makePairKey(match.teamB[0], match.teamB[1]);
@@ -316,7 +540,6 @@ function evaluateMatch(
   const partnerRepeat = (state.partnerCount.get(keyA) || 0) + (state.partnerCount.get(keyB) || 0);
   const opponentRepeat = state.opponentCount.get(matchKey) || 0;
 
-  // 模拟更新后的上场次数差距
   const tempAppearances = new Map(state.appearanceCount);
   for (const id of match.players) {
     tempAppearances.set(id, (tempAppearances.get(id) || 0) + 1);
@@ -326,23 +549,13 @@ function evaluateMatch(
   const minApp = Math.min(...values);
   const gap = maxApp - minApp;
 
-  // 上轮刚下场本轮又上场的人数
-  let backToCourt = 0;
-  for (const id of match.players) {
-    if (!state.lastOnCourt.has(id)) continue;
-    if ((state.consecutiveOnCourt.get(id) || 0) === 0) {
-      backToCourt++;
-    }
-  }
-
-  // #7: 对手次数方差 - 模拟更新后的对手次数方差
-  const tempOpponentPairCount = new Map(state.opponentPairCount);
   const [a1, a2] = match.teamA;
   const [b1, b2] = match.teamB;
   const oppPairs = [
     makePairKey(a1, b1), makePairKey(a1, b2),
     makePairKey(a2, b1), makePairKey(a2, b2),
   ];
+  const tempOpponentPairCount = new Map(state.opponentPairCount);
   for (const pairKey of oppPairs) {
     tempOpponentPairCount.set(pairKey, (tempOpponentPairCount.get(pairKey) || 0) + 1);
   }
@@ -350,7 +563,6 @@ function evaluateMatch(
   const oppMean = opponentValues.reduce((s, v) => s + v, 0) / opponentValues.length;
   const oppVariance = opponentValues.reduce((s, v) => s + (v - oppMean) ** 2, 0) / opponentValues.length;
 
-  // #8: 连续相同对手数 - 检查当前对局中有多少对选手在上轮也是对手
   let consecutiveOpponent = 0;
   for (const id of match.players) {
     const lastOpp = state.lastOpponents.get(id);
@@ -360,75 +572,33 @@ function evaluateMatch(
       if (lastOpp.has(opp)) consecutiveOpponent++;
     }
   }
-  // 每对对手被计算了两次（A 视角和 B 视角），除以 2
   consecutiveOpponent = Math.floor(consecutiveOpponent / 2);
-
-  // #9: 休息间隔方差 - 模拟更新后的休息间隔方差
-  const tempRestRounds = new Map<number, number[]>();
-  for (const [id, rounds] of state.restRounds) {
-    tempRestRounds.set(id, [...rounds]);
-  }
-  // 本轮休息的选手记录本轮
-  for (const id of playerIds) {
-    if (!match.players.includes(id)) {
-      tempRestRounds.get(id)!.push(999); // 用 999 表示当前轮（尚未确定轮次）
-    }
-  }
-  let restVariance = 0;
-  let restVarianceCount = 0;
-  for (const [, rounds] of tempRestRounds) {
-    if (rounds.length < 2) continue;
-    const intervals: number[] = [];
-    for (let i = 1; i < rounds.length; i++) {
-      intervals.push(rounds[i] - rounds[i - 1]);
-    }
-    const mean = intervals.reduce((s, v) => s + v, 0) / intervals.length;
-    const variance = intervals.reduce((s, v) => s + (v - mean) ** 2, 0) / intervals.length;
-    restVariance += variance;
-    restVarianceCount++;
-  }
-  restVariance = restVarianceCount > 0 ? restVariance / restVarianceCount : 0;
 
   return partnerRepeat * 100
     + opponentRepeat * 50
     + oppVariance * 30
     + consecutiveOpponent * 40
-    + gap * 10
-    + restVariance * 15
-    + backToCourt * 5;
+    + gap * 10;
 }
 
-/**
- * 全局质量评估函数
- * 对整个对阵表计算综合质量分（越低越好）
- */
-function evaluateScheduleQuality(
+export function evaluateScheduleQuality(
   matches: MultiTurnMatch[],
   players: MultiTurnPlayer[]
 ): number {
   const playerIds = players.map(p => p.id);
-
-  // 统计搭档覆盖
   const partnerSet = new Set<string>();
-  // 统计对手覆盖
   const opponentPairSet = new Set<string>();
-  // 统计上场次数
   const appearanceCount = new Map<number, number>();
   for (const id of playerIds) appearanceCount.set(id, 0);
-  // 统计对手次数（用于方差计算）
   const opponentPairCount = new Map<string, number>();
 
   for (const match of matches) {
     const [a1, a2] = match.teamA;
     const [b1, b2] = match.teamB;
-
-    // 搭档
     const keyA = makePairKey(a1, a2);
     const keyB = makePairKey(b1, b2);
     partnerSet.add(keyA);
     partnerSet.add(keyB);
-
-    // 对手
     const oppPairs = [
       makePairKey(a1, b1), makePairKey(a1, b2),
       makePairKey(a2, b1), makePairKey(a2, b2),
@@ -437,14 +607,11 @@ function evaluateScheduleQuality(
       opponentPairSet.add(pairKey);
       opponentPairCount.set(pairKey, (opponentPairCount.get(pairKey) || 0) + 1);
     }
-
-    // 上场次数
     for (const id of [a1, a2, b1, b2]) {
       appearanceCount.set(id, (appearanceCount.get(id) || 0) + 1);
     }
   }
 
-  // 计算覆盖率缺口
   const possiblePartnerPairs = new Set<string>();
   const possibleOpponentPairs = new Set<string>();
   for (let i = 0; i < playerIds.length; i++) {
@@ -456,12 +623,8 @@ function evaluateScheduleQuality(
   }
   const partnerCoverageGap = possiblePartnerPairs.size - partnerSet.size;
   const opponentCoverageGap = possibleOpponentPairs.size - opponentPairSet.size;
-
-  // 最大上场差距
   const appearances = Array.from(appearanceCount.values());
   const maxAppearanceGap = Math.max(...appearances) - Math.min(...appearances);
-
-  // 对手次数方差
   const oppValues = Array.from(opponentPairCount.values());
   const oppMean = oppValues.reduce((s, v) => s + v, 0) / oppValues.length;
   const oppVariance = oppValues.reduce((s, v) => s + (v - oppMean) ** 2, 0) / oppValues.length;

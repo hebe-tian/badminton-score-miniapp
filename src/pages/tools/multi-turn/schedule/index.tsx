@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { View, Text, Input } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { MultiTurnEvent, MultiTurnMatch } from '../../../../utils/multi-turn-types'
 import { calculatePlayerStats, generateSchedule } from '../../../../utils/multi-turn-algorithm'
 import { MatchConfig } from '../../../../utils/types'
@@ -26,46 +26,31 @@ export default function MultiTurnSchedule() {
   const [serverIndex, setServerIndex] = useState<number>(0)
   const [receiverIndex, setReceiverIndex] = useState<number>(0)
 
-  // 监听记分器回传
-  useEffect(() => {
-    const handleScoreBack = (data: { round: number; scoreA: number; scoreB: number }) => {
-      if (!event) return
-      const newMatches = event.matches.map(m => {
-        if (m.round === data.round) {
-          return { ...m, scoreA: data.scoreA, scoreB: data.scoreB, completed: true }
-        }
-        return m
-      })
-      setEvent({ ...event, matches: newMatches })
-    }
+  // 用 ref 保存最新的 event，避免闭包过期
+  const eventRef = useRef(event)
+  eventRef.current = event
 
-    Taro.eventCenter.on('multiTurnScoreBack', handleScoreBack)
-    return () => {
-      Taro.eventCenter.off('multiTurnScoreBack', handleScoreBack)
-    }
-  }, [event])
-
-  // 页面显示时检查是否有回传数据
-  useEffect(() => {
-    const checkScoreBack = () => {
-      try {
-        const stored = Taro.getStorageSync('multiTurnScoreBack')
-        if (stored && event) {
-          const data = JSON.parse(stored)
-          const newMatches = event.matches.map(m => {
+  // 页面显示时检查记分器回传数据
+  useDidShow(() => {
+    try {
+      const stored = Taro.getStorageSync('multiTurnScoreBack')
+      if (stored) {
+        const data = JSON.parse(stored)
+        const currentEvent = eventRef.current
+        if (currentEvent) {
+          const newMatches = currentEvent.matches.map(m => {
             if (m.round === data.round) {
               return { ...m, scoreA: data.scoreA, scoreB: data.scoreB, completed: true }
             }
             return m
           })
-          setEvent({ ...event, matches: newMatches })
-          Taro.removeStorageSync('multiTurnScoreBack')
+          setEvent({ ...currentEvent, matches: newMatches })
         }
-      } catch (_) {
-        // ignore
+        Taro.removeStorageSync('multiTurnScoreBack')
       }
+    } catch (_) {
+      // ignore
     }
-    checkScoreBack()
   })
 
   if (!event) {
@@ -162,8 +147,15 @@ export default function MultiTurnSchedule() {
 
   const handleRegenerate = () => {
     if (hasStarted) return
-    const newMatches = generateSchedule(event.players, event.partnerMode, event.totalRounds)
-    setEvent({ ...event, matches: newMatches })
+    const result = generateSchedule(event.players, event.partnerMode, event.totalRounds)
+    if (result.isAdjusted) {
+      Taro.showModal({
+        title: '轮次已调整',
+        content: `为保证每人上场次数一致，实际轮次已调整为 ${result.adjustedRounds} 场`,
+        showCancel: false,
+      })
+    }
+    setEvent({ ...event, matches: result.matches, totalRounds: result.adjustedRounds })
     Taro.showToast({ title: '已重新生成', icon: 'success', duration: 1500 })
   }
 

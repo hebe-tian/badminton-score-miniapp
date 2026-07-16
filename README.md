@@ -15,6 +15,12 @@
 
 ---
 
+You can find this Mini-App By Here:   
+
+![Mini-App](./docs/miniapp.jpg)
+
+---
+
 ## 📱 功能特性
 
 - **单打模式**：1对1单挑，支持15分或21分制
